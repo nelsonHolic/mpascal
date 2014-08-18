@@ -3,7 +3,8 @@ __author__ = 'noescobar'
 # ------------------------------------------------------------
 # calclex.py
 #
-# tokenizer for a simple expression evaluator for
+# algo nuevo 
+#  tokenizer for a simple expression evaluator for
 # numbers and +,-,*,/
 # ------------------------------------------------------------
 import ply.lex as lex
