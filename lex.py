@@ -1,5 +1,7 @@
 __author__ = 'noescobar'
 
+
+
 # ------------------------------------------------------------
 # calclex.py
 #
@@ -31,12 +33,12 @@ PALABRAS_RESERVADAS = (
     'OR',
     'AND',
     'NOT',
-    'CARPINCHO',
 )
 
 
 # List of token names.   This is always required
 tokens = (
+    'CARPINCHO',
     'NUMBER',
     'PLUS',
     'MINUS',
@@ -65,6 +67,7 @@ tokens = (
 ) + PALABRAS_RESERVADAS
 
 # Regular expression rules for simple tokens
+t_CARPINCHO = r'LOL'
 t_PLUS    = r'\+'
 t_MINUS   = r'-'
 t_TIMES   = r'\*'
@@ -81,7 +84,12 @@ t_EQ      = r'\=='
 t_DI      = r'\!='
 t_ASIGSIM  = r'\:='
 t_DEFSIM  = r'\:'
-t_CARPINCHO = r'LOL'
+
+
+
+def t_IDInvalido(t):
+    r'(^[\d]+[a-zA-Z_][a-zA-Z_0-9]*) |([a-zA-Z_][a-zA-Z_0-9]*(&|%|\$|!|\?)+)+'
+    print "NO ES ID VALIDO '%s'" % t.value
 
 
 def t_ID(t):
@@ -89,10 +97,6 @@ def t_ID(t):
     if t.value in PALABRAS_RESERVADAS:
         t.type=t.value
     return t
-
-def t_IDInvalido(t):
-    r' ^[\d]+[a-zA-Z_][a-zA-Z_0-9]*'
-    print "NO ES ID VALIDO '%s'" % t.value
 
 
 
