@@ -47,6 +47,7 @@ tokens = (
     'LCORCH',
     'RCORCH',
     'ID',
+    'IDInvalido',
     'GT',
     'GE',
     'LT',
@@ -55,7 +56,9 @@ tokens = (
     'DI',
     'ASIGSIM',
     'DEFSIM',
+    'FLOATInvalido',
     'NFLOAT',
+    'INTinvalido',
     'NINT',
     'COMMENT',
 
@@ -87,16 +90,31 @@ def t_ID(t):
         t.type=t.value
     return t
 
+def t_IDInvalido(t):
+    r' ^[\d]+[a-zA-Z_][a-zA-Z_0-9]*'
+    print "NO ES ID VALIDO '%s'" % t.value
+
+
 
 def t_NFLOAT(t):
-    r"((0 | [1-9][0-9]*) \.[0-9]+) | ((0 | [1-9][0-9]*) (\.[0-9]+)? [eE][+-][0-9]+)"
+    r"((0 | ^[1-9][0-9]*) \.[0-9]+$) | ((0 | ^[1-9][0-9]*) (\.[0-9]+)? [eE][+-][0-9]+$)"
     t.value = float(t.value)
     return t
+
+def t_FLOATInvalido(t):
+    r"((0 | [1-9][0-9]*) \.\.+ [0-9]+) | ((0 | [1-9][0-9]*) (\.[0-9]+)? [eE]+[+-]+[0-9\w]+)"
+    print "NO ES UN FLOAT VALIDO '%s'" % t.value
+
+
+# A regular expression rule with some action code
+def t_INTInvalido(t):
+    r'0[0-9]+'
+    print "NO ES UN INT VALIDO '%s'" % t.value
 
 
 # A regular expression rule with some action code
 def t_NINT(t):
-    r'^[1-9][0-9]*$| ^0$'
+    r'[1-9][0-9]*| 0'
     t.value = int(t.value)
     return t
 
