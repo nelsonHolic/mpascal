@@ -7,8 +7,6 @@ __author__ = 'noescobar'
 #  tokenizer for a simple expression evaluator for
 # numbers and +,-,*,/
 # ------------------------------------------------------------
-
-
 import ply.lex as lex
 
 
@@ -98,7 +96,7 @@ def t_NFLOAT(t):
 
 # A regular expression rule with some action code
 def t_NINT(t):
-    r'^ [1-9][0-9]* [\w]$| ^0[.+]$'
+    r'^[1-9][0-9]*$| ^0$'
     t.value = int(t.value)
     return t
 
@@ -124,3 +122,4 @@ def t_error(t):
 
 # Build the lexer
 lexer = lex.lex()
+
