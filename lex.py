@@ -1,7 +1,6 @@
 __author__ = 'noescobar'
 
 
-
 # ------------------------------------------------------------
 # calclex.py
 #
@@ -35,9 +34,6 @@ PALABRAS_RESERVADAS = (
     'NOT',
 )
 
-
-#dgdgshghds
-
 # List of token names.   This is always required
 tokens = (
     'CARPINCHO',
@@ -65,11 +61,27 @@ tokens = (
     'INTinvalido',
     'NINT',
     'COMMENT',
-
+    'COMMENTInvalidoL',
+    'COMMENTInvalidoR',
 ) + PALABRAS_RESERVADAS
 
+t_CARPINCHO = r'CARPINCHO'
+
+def t_COMMENT(t):
+    r'/ \* (.|\n)* \* /'
+    pass
+
+def t_COMMENTInvalidoL(t):
+    r'/ \* (.|\n)* '
+    print ("SE HA DETECTADO UN COMENTARIO SIN TERMINAR '"+t.value +"' EN LA LINEA "+str(t.lineno))
+
+def t_COMMENTInvalidoR(t):
+    r'\* /'
+    print ("SE HA DETECTADO UN COMENTARIO MAL FORMADO  '"+t.value +"' EN LA LINEA "+str(t.lineno))
+
+
+
 # Regular expression rules for simple tokens
-t_CARPINCHO = r'LOL'
 t_PLUS    = r'\+'
 t_MINUS   = r'-'
 t_TIMES   = r'\*'
@@ -88,33 +100,29 @@ t_ASIGSIM  = r'\:='
 t_DEFSIM  = r'\:'
 
 
+def t_FLOATInvalido(t):
+    r"((0 | [1-9][0-9]* | 0+[0-9]*) \.\.+ [0-9]+)|((0 | [1-9][0-9]*) \.+ [0-9]+ \.+[0-9]+)+ | ((0 | [1-9][0-9]* | 0+[0-9]*) (\.[0-9]+)? [eE][eE]+[+-]+[0-9\w]+) |((0 | [1-9][0-9]* | 0+[0-9]*) (\.[0-9]+)?[eE]+[+-][+-]+[0-9\w]+) | (0+[0-9]* \.[0-9]+ ([eE][+-][0-9]+)?) "
+    print ("ESTO NO ES UN FLOAT VALIDO EN LA LINEA '"+t.value +"' linea = "+str(t.lineno))
+
+def t_NFLOAT(t):
+    r"((0 | [1-9][0-9]*) \.[0-9]+) | ((0 | [1-9][0-9]*) (\.[0-9]+)? [eE][+-][0-9]+)"
+    t.value = float(t.value)
+    return t
 
 def t_IDInvalido(t):
-    r'(^[\d]+[a-zA-Z_][a-zA-Z_0-9]*) |([a-zA-Z_][a-zA-Z_0-9]*(&|%|\$|!|\?)+)+'
-    print "NO ES ID VALIDO '%s'" % t.value
+    r'([\d]+[a-zA-Z_][a-zA-Z_0-9]*) |([a-zA-Z_][a-zA-Z_0-9]*(&|%|\$|!|\?)+)+ |([a-zA-Z_0-9]+(&|%|\$|!|\?)+[a-zA-Z_0-9]+)+'
+    print "ESTO NO ES ID VALIDO '%s' " % t.value
 
 
 def t_ID(t):
-    r' [a-zA-Z_][a-zA-Z_0-9]*'
+    r'[a-zA-Z_][a-zA-Z_0-9]*'
     if t.value in PALABRAS_RESERVADAS:
         t.type=t.value
     return t
 
-
-
-def t_NFLOAT(t):
-    r"((0 | ^[1-9][0-9]*) \.[0-9]+$) | ((0 | ^[1-9][0-9]*) (\.[0-9]+)? [eE][+-][0-9]+$)"
-    t.value = float(t.value)
-    return t
-
-def t_FLOATInvalido(t):
-    r"((0 | [1-9][0-9]*) \.\.+ [0-9]+) | ((0 | [1-9][0-9]*) (\.[0-9]+)? [eE]+[+-]+[0-9\w]+)"
-    print "NO ES UN FLOAT VALIDO '%s'" % t.value
-
-
 # A regular expression rule with some action code
 def t_INTInvalido(t):
-    r'0[0-9]+'
+    r'[0-9]+'
     print "NO ES UN INT VALIDO '%s'" % t.value
 
 
@@ -131,9 +139,7 @@ def t_newline(t):
     r'\n+'
     t.lexer.lineno += len(t.value)
 
-def t_COMMENT(t):
-    r'/ \* .* \* /'
-    pass
+
 
 
 # A string containing ignored characters (spaces and tabs)
