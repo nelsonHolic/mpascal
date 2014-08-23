@@ -79,6 +79,14 @@ def t_COMMENTInvalidoR(t):
     r'\* /'
     print ("SE HA DETECTADO UN COMENTARIO MAL FORMADO  '"+t.value +"' EN LA LINEA "+str(t.lineno))
 
+def t_STRING(t):
+    r'\" (.|\n|\\|\")* \"'
+    return t
+
+def t_STRINGInvalida(t):
+   r' \" .* | .* \" '
+   print ("SE HA DETECTADO UN STRING MAL FORMADO  '"+t.value +"' EN LA LINEA "+str(t.lineno))
+
 
 
 # Regular expression rules for simple tokens
@@ -110,7 +118,7 @@ def t_NFLOAT(t):
     return t
 
 def t_IDInvalido(t):
-    r'([\d]+[a-zA-Z_][a-zA-Z_0-9]*) |([a-zA-Z_][a-zA-Z_0-9]*(&|%|\$|!|\?)+)+ |([a-zA-Z_0-9]+(&|%|\$|!|\?)+[a-zA-Z_0-9]+)+'
+    r'([\d]+[a-zA-Z_][a-zA-Z_0-9]*) | ([a-zA-Z_0-9]+|(&|%|\$|!|\?)+)+ |([a-zA-Z_0-9]+(&|%|\$|!|\?)+[a-zA-Z_0-9]+)+'
     print "ESTO NO ES ID VALIDO '%s' " % t.value
 
 
