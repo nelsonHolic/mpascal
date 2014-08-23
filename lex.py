@@ -37,6 +37,8 @@ PALABRAS_RESERVADAS = (
 # List of token names.   This is always required
 tokens = (
     'CARPINCHO',
+    'STRING',
+    'STRINGInvalida'
     'NUMBER',
     'PLUS',
     'MINUS',
@@ -79,7 +81,13 @@ def t_COMMENTInvalidoR(t):
     r'\* /'
     print ("SE HA DETECTADO UN COMENTARIO MAL FORMADO  '"+t.value +"' EN LA LINEA "+str(t.lineno))
 
+def t_STRINGInvalida(t):
+    r'\" .* 1 .* \"'
+    return t
 
+def t_STRING(t):
+    r'\" .* \"'
+    return t
 
 # Regular expression rules for simple tokens
 t_PLUS    = r'\+'
@@ -151,5 +159,5 @@ def t_error(t):
     t.lexer.skip(1)
 
 # Build the lexer
-lexer = lex.lex()
+lexer = lex.lex(debug=1)
 
