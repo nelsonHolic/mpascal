@@ -237,5 +237,5 @@ def tokenizer() :
         print tok
 
 
-#if __name__ == '__main__':
-#	lex.runmain()
+if __name__ == '__main__':
+	lex.runmain()
