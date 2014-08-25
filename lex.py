@@ -8,6 +8,10 @@ __author__ = 'noescobar'
 #  tokenizer for a simple expression evaluator for
 # numbers and +,-,*,/
 # ------------------------------------------------------------
+
+import sys
+sys.path.append("../..")
+
 import ply.lex as lex
 
 
@@ -84,7 +88,7 @@ def t_STRING(t):
     return t
 
 def t_STRINGInvalida(t):
-   r' \" .* | .* \" '
+   r' \" .* | .* \" ' # falta agregar lo de solo \n \" \\
    print ("SE HA DETECTADO UN STRING MAL FORMADO  '"+t.value +"' EN LA LINEA "+str(t.lineno))
 
 
@@ -118,7 +122,7 @@ def t_NFLOAT(t):
     return t
 
 def t_IDInvalido(t):
-    r'([\d]+[a-zA-Z_][a-zA-Z_0-9]*) | ([a-zA-Z_0-9]+|(&|%|\$|!|\?)+)+ |([a-zA-Z_0-9]+(&|%|\$|!|\?)+[a-zA-Z_0-9]+)+'
+    r'([\d]+[a-zA-Z_][a-zA-Z_0-9]*) | [a-zA-Z_0-9]+(&|%|\$|!|\?|\#)+ [a-zA-Z_0-9]* '
     print "ESTO NO ES ID VALIDO '%s' " % t.value
 
 
@@ -128,10 +132,7 @@ def t_ID(t):
         t.type=t.value
     return t
 
-# A regular expression rule with some action code
-def t_INTInvalido(t):
-    r'[0-9]+'
-    print "NO ES UN INT VALIDO '%s'" % t.value
+
 
 
 # A regular expression rule with some action code
@@ -140,10 +141,13 @@ def t_NINT(t):
     t.value = int(t.value)
     return t
 
-
+# A regular expression rule with some action code
+def t_INTInvalido(t):
+    r'[0-9]+'
+    print "NO ES UN INT VALIDO '%s'" % t.value
 
 # Define a rule so we can track line numbers
-def t_newline(t):
+def t_NEWLINE(t):
     r'\n+'
     t.lexer.lineno += len(t.value)
 
@@ -161,3 +165,5 @@ def t_error(t):
 # Build the lexer
 lexer = lex.lex()
 
+if __name__ == '__main__':
+	lex.runmain()
