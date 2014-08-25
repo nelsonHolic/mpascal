@@ -9,8 +9,7 @@ __author__ = 'noescobar'
 # numbers and +,-,*,/
 # ------------------------------------------------------------
 
-import sys
-sys.path.append("../..")
+
 
 import ply.lex as lex
 
@@ -40,7 +39,6 @@ PALABRAS_RESERVADAS = (
 
 # List of token names.   This is always required
 tokens = (
-    'CARPINCHO',
     'NUMBER',
     'PLUS',
     'MINUS',
@@ -69,7 +67,6 @@ tokens = (
     'COMMENTInvalidoR',
 ) + PALABRAS_RESERVADAS
 
-t_CARPINCHO = r'CARPINCHO'
 
 def t_COMMENT(t):
     r'/ \* (.|\n)* \* /'
@@ -77,44 +74,91 @@ def t_COMMENT(t):
 
 def t_COMMENTInvalidoL(t):
     r'/ \* (.|\n)* '
-    print ("SE HA DETECTADO UN COMENTARIO SIN TERMINAR '"+t.value +"' EN LA LINEA "+str(t.lineno))
+    print ("SE HA DETECTADO UN COMENTARIO SIN TERMINAR EN LA LINEA "+str(t.lineno))
 
 def t_COMMENTInvalidoR(t):
-    r'\* /'
-    print ("SE HA DETECTADO UN COMENTARIO MAL FORMADO  '"+t.value +"' EN LA LINEA "+str(t.lineno))
+    r'\*/'
+    print ("SE HA DETECTADO UN COMENTARIO MAL FORMADO EN LA LINEA "+str(t.lineno))
 
-def t_STRING(t):
-    r'\" (.|\n|\\|\")* \"'
-    return t
 
-def t_STRINGInvalida(t):
-   r' \" .* | .* \" ' # falta agregar lo de solo \n \" \\
-   print ("SE HA DETECTADO UN STRING MAL FORMADO  '"+t.value +"' EN LA LINEA "+str(t.lineno))
 
 
 
 # Regular expression rules for simple tokens
-t_PLUS    = r'\+'
-t_MINUS   = r'-'
-t_TIMES   = r'\*'
-t_DIVIDE  = r'/'
-t_LPAREN  = r'\('
-t_RPAREN  = r'\)'
-t_LCORCH  = r'\['
-t_RCORCH  = r'\]'
-t_GT      = r'\>'
-t_GE      = r'\>='
-t_LT      = r'\<'
-t_LE      = r'\<='
-t_EQ      = r'\=='
-t_DI      = r'\!='
-t_ASIGSIM  = r'\:='
-t_DEFSIM  = r'\:'
+def t_PLUS(t) :
+    r'\+'
+    return t
+
+def t_MINUS(t):
+    r'-'
+    return t
+
+def t_TIMES  (t):
+    r'\*'
+    return t
+
+def t_DIVIDE(t):
+    r'/'
+    return t
+
+def t_LPAREN (t):
+    r'\('
+    return t
+
+def t_RPAREN (t):
+    r'\)'
+    return t
+
+def t_LCORCH (t):
+    r'\['
+    return t
+
+def t_RCORCH (t):
+    r'\]'
+    return t
+
+def t_GE      (t):
+    r'>='
+    return t
+
+def t_LE(t):
+    r'<='
+    return t
+
+def t_EQ(t):
+    r'=='
+    return t
+
+
+def t_DI(t):
+    r'!='
+    return t
+
+def t_ASIGSIM  (t):
+    r':='
+    return t
+
+def t_GT     (t):
+    r'>'
+    return t
+
+
+def t_LT(t):
+    r'<'
+    return t
+
+
+
+
+
+def t_DEFSIM (t):
+    r':'
+    return t
 
 
 def t_FLOATInvalido(t):
     r"((0 | [1-9][0-9]* | 0+[0-9]*) \.\.+ [0-9]+)|((0 | [1-9][0-9]*) \.+ [0-9]+ \.+[0-9]+)+ | ((0 | [1-9][0-9]* | 0+[0-9]*) (\.[0-9]+)? [eE][eE]+[+-]+[0-9\w]+) |((0 | [1-9][0-9]* | 0+[0-9]*) (\.[0-9]+)?[eE]+[+-][+-]+[0-9\w]+) | (0+[0-9]* \.[0-9]+ ([eE][+-][0-9]+)?) "
-    print ("ESTO NO ES UN FLOAT VALIDO EN LA LINEA '"+t.value +"' linea = "+str(t.lineno))
+    print ("NUMERO FLOTANTE NO VALIDO '"+t.value +"' EN LA LINEA  "+str(t.lineno))
 
 def t_NFLOAT(t):
     r"((0 | [1-9][0-9]*) \.[0-9]+) | ((0 | [1-9][0-9]*) (\.[0-9]+)? [eE][+-][0-9]+)"
@@ -123,7 +167,7 @@ def t_NFLOAT(t):
 
 def t_IDInvalido(t):
     r'([\d]+[a-zA-Z_][a-zA-Z_0-9]*) | [a-zA-Z_0-9]+(&|%|\$|!|\?|\#)+ [a-zA-Z_0-9]* '
-    print "ESTO NO ES ID VALIDO '%s' " % t.value
+    print ("ID NO VALIDO '"+t.value +"' EN LA LINEA  "+str(t.lineno))
 
 
 def t_ID(t):
@@ -132,8 +176,9 @@ def t_ID(t):
         t.type=t.value
     return t
 
-
-
+def t_INTInvalido(t):
+    r'0+[1-9]+'
+    print ("NUMERO ENTERO NO VALIDO '"+t.value +"' EN LA LINEA  "+str(t.lineno))
 
 # A regular expression rule with some action code
 def t_NINT(t):
@@ -141,10 +186,28 @@ def t_NINT(t):
     t.value = int(t.value)
     return t
 
+def t_STRING(t):
+    r'\" (.|\n)* \"'
+    pos = 0
+    bolean = False
+    for i in t.value :
+        pos +=1
+        if (i == "\\"):
+            if(t.value[pos] == 'n' or t.value[pos] == '"' or t.value[pos] == '\\' ):
+                pass
+            else:
+                bolean = True
+                print ("SE HA DETECTADO UN CARACTER DE ESCAPE DESCONOCIDO EN LA LINEA "+str(t.lineno))
+                break
+    if(not bolean):
+        return t
+
+def t_STRINGInvalida(t):
+   r' \" .* | .* \" ' # falta agregar lo de solo \n \" \\
+   print ("SE HA DETECTADO UN STRING MAL FORMADO EN LA LINEA "+str(t.lineno)+ " "+t.value)
+
 # A regular expression rule with some action code
-def t_INTInvalido(t):
-    r'[0-9]+'
-    print "NO ES UN INT VALIDO '%s'" % t.value
+
 
 # Define a rule so we can track line numbers
 def t_NEWLINE(t):
@@ -165,5 +228,14 @@ def t_error(t):
 # Build the lexer
 lexer = lex.lex()
 
-if __name__ == '__main__':
-	lex.runmain()
+
+def tokenizer() :
+    while True:
+        tok = lexer.token()
+        if not tok:
+            break      # No more input
+        print tok
+
+
+#if __name__ == '__main__':
+#	lex.runmain()
