@@ -228,7 +228,16 @@ def t_error(t):
     t.lexer.skip(1)
 
 # Build the lexer
-lex.lex()
+lexer = lex.lex()
+
+
+def tokenizer() :
+    while True:
+        tok = lexer.token()
+        if not tok:
+            break      # No more input
+        print tok
+
 
 if __name__ == '__main__':
 	lex.runmain()
