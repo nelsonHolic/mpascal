@@ -9,12 +9,11 @@ __author__ = 'noescobar'
 # numbers and +,-,*,/
 # ------------------------------------------------------------
 
-
-import sys
-sys.path.append("../..")
-
 import ply.lex as lex
 
+import sys
+
+sys.path.append("../..")
 
 PALABRAS_RESERVADAS = (
     'INT',
@@ -42,14 +41,6 @@ PALABRAS_RESERVADAS = (
 # List of token names.   This is always required
 tokens = (
     'NUMBER',
-    'PLUS',
-    'MINUS',
-    'TIMES',
-    'DIVIDE',
-    'LPAREN',
-    'RPAREN',
-    'LCORCH',
-    'RCORCH',
     'ID',
     'IDInvalido',
     'GT',
@@ -59,7 +50,6 @@ tokens = (
     'EQ',
     'DI',
     'ASIGSIM',
-    'DEFSIM',
     'FLOATInvalido',
     'NFLOAT',
     'INTinvalido',
@@ -82,44 +72,9 @@ def t_COMMENTInvalidoR(t):
     r'\*/'
     print ("SE HA DETECTADO UN COMENTARIO MAL FORMADO EN LA LINEA "+str(t.lineno))
 
+literals='+-()[]*/:,;'
 
-
-
-
-# Regular expression rules for simple tokens
-def t_PLUS(t) :
-    r'\+'
-    return t
-
-def t_MINUS(t):
-    r'-'
-    return t
-
-def t_TIMES  (t):
-    r'\*'
-    return t
-
-def t_DIVIDE(t):
-    r'/'
-    return t
-
-def t_LPAREN (t):
-    r'\('
-    return t
-
-def t_RPAREN (t):
-    r'\)'
-    return t
-
-def t_LCORCH (t):
-    r'\['
-    return t
-
-def t_RCORCH (t):
-    r'\]'
-    return t
-
-def t_GE      (t):
+def t_GE(t):
     r'>='
     return t
 
@@ -136,25 +91,17 @@ def t_DI(t):
     r'!='
     return t
 
-def t_ASIGSIM  (t):
+def t_ASIGSIM(t):
     r':='
     return t
 
-def t_GT     (t):
+def t_GT(t):
     r'>'
     return t
 
 
 def t_LT(t):
     r'<'
-    return t
-
-
-
-
-
-def t_DEFSIM (t):
-    r':'
     return t
 
 
@@ -174,8 +121,8 @@ def t_IDInvalido(t):
 
 def t_ID(t):
     r'[a-zA-Z_][a-zA-Z_0-9]*'
-    if t.value in PALABRAS_RESERVADAS:
-        t.type=t.value
+    if t.value.upper() in PALABRAS_RESERVADAS:
+        t.type=t.value.upper()
     return t
 
 def t_INTInvalido(t):
@@ -189,12 +136,12 @@ def t_NINT(t):
     return t
 
 def t_STRING(t):
-    r'\" (.|\n)* \"'
+    r'\" .* \"'
     pos = 0
     bolean = False
     for i in t.value :
         pos +=1
-        if (i == "\\"):
+        if (i == '\\'):
             if(t.value[pos] == 'n' or t.value[pos] == '"' or t.value[pos] == '\\' ):
                 pass
             else:
@@ -205,7 +152,7 @@ def t_STRING(t):
         return t
 
 def t_STRINGInvalida(t):
-   r' \" .* | .* \" ' # falta agregar lo de solo \n \" \\
+   r' \" .* | .* \" '
    print ("SE HA DETECTADO UN STRING MAL FORMADO EN LA LINEA "+str(t.lineno)+ " "+t.value)
 
 # A regular expression rule with some action code
@@ -217,27 +164,15 @@ def t_NEWLINE(t):
     t.lexer.lineno += len(t.value)
 
 
-
-
 # A string containing ignored characters (spaces and tabs)
 t_ignore  = ' \t'
 
-# Error handling rule
+# Manejo de errores
 def t_error(t):
-    print "NO ES VALIDO '%s'" % t.value[0]
-    t.lexer.skip(1)
-
-# Build the lexer
-lexer = lex.lex()
+	print ("'%d': caracter ilegal '%s'" % (t.lexer.lineno, t.value[0]))
+	t.lexer.skip(1)
 
 
-def tokenizer() :
-    while True:
-        tok = lexer.token()
-        if not tok:
-            break      # No more input
-        print tok
-
-
+lexer=lex.lex()
 if __name__ == '__main__':
-	lex.runmain()
+     lex.runmain()
