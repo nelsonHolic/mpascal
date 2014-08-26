@@ -61,18 +61,18 @@ tokens = (
 
 
 def t_COMMENT(t):
-    r'/ \* (.|\n)* \* /'
+    r'/\* (.|\n)* \*/'
     pass
 
 def t_COMMENTInvalidoL(t):
-    r'/ \* (.|\n)* '
+    r'/\* .* '
     print ("SE HA DETECTADO UN COMENTARIO SIN TERMINAR EN LA LINEA "+str(t.lineno))
 
 def t_COMMENTInvalidoR(t):
     r'\*/'
     print ("SE HA DETECTADO UN COMENTARIO MAL FORMADO EN LA LINEA "+str(t.lineno))
 
-literals='+-()[]*/:,;'
+literals='(+-)[]*/:,;'
 
 def t_GE(t):
     r'>='
@@ -85,7 +85,6 @@ def t_LE(t):
 def t_EQ(t):
     r'=='
     return t
-
 
 def t_DI(t):
     r'!='
@@ -106,16 +105,16 @@ def t_LT(t):
 
 
 def t_FLOATInvalido(t):
-    r"((0 | [1-9][0-9]* | 0+[0-9]*) \.\.+ [0-9]+)|((0 | [1-9][0-9]*) \.+ [0-9]+ \.+[0-9]+)+ | ((0 | [1-9][0-9]* | 0+[0-9]*) (\.[0-9]+)? [eE][eE]+[+-]+[0-9\w]+) |((0 | [1-9][0-9]* | 0+[0-9]*) (\.[0-9]+)?[eE]+[+-][+-]+[0-9\w]+) | (0+[0-9]* \.[0-9]+ ([eE][+-][0-9]+)?) "
+    r"([0-9]+ (\. [0-9]+)? [eE][+-][0-9]+(\.[0-9]+)+?) |((0 | [1-9][0-9]* | 0+[0-9]*) \.\.+ [0-9]+)|((0 | [1-9][0-9]*) \.+ [0-9]+ \.+[0-9]+)+ |((0 | [1-9][0-9]* | 0+[0-9]*) (\.[0-9]+)?[eE][+-][+-]+[0-9\w]+) | (0+[0-9]* \.[0-9]+ ([eE][+-][0-9]+)?) "
     print ("NUMERO FLOTANTE NO VALIDO '"+t.value +"' EN LA LINEA  "+str(t.lineno))
 
 def t_NFLOAT(t):
-    r"((0 | [1-9][0-9]*) \.[0-9]+) | ((0 | [1-9][0-9]*) (\.[0-9]+)? [eE]([+-])?[0-9]+)"
+    r" ((0 | [1-9][0-9]*)([.][0-9]+)? [eE]([+-])?[0-9]+) |((0 | [1-9][0-9]*) \.[0-9]+)"
     return t
 
-def t_IDInvalido(t):
-    r'([\d]+[a-zA-Z_][a-zA-Z_0-9]*) | ([a-zA-Z_0-9]+(&|%|\$|!|\?|\#)+ | (&|%|\$|!|\?|\#)+[a-zA-Z_0-9]+ )+ [a-zA-Z_0-9]*'
-    print ("ID NO VALIDO '"+t.value +"' EN LA LINEA  "+str(t.lineno))
+#def t_IDInvalido(t):
+#    r'([\d]+[a-zA-Z_][a-zA-Z_0-9]*) | ([a-zA-Z_0-9]+(&|%|\$|!|\?|\#)+ | (&|%|\$|!|\?|\#)+[a-zA-Z_0-9]+ )+ [a-zA-Z_0-9]*'
+#    print ("ID NO VALIDO '"+t.value +"' EN LA LINEA  "+str(t.lineno))
 
 
 def t_ID(t):
@@ -134,7 +133,7 @@ def t_NINT(t):
     return t
 
 def t_STRING(t):
-    r'\" .* \"'
+    r'" .* "'
     pos = 0
     bolean = False
     for i in t.value :
@@ -151,10 +150,8 @@ def t_STRING(t):
         return t
 
 def t_STRINGInvalida(t):
-   r' \" .* | .* \" '
+   r'" .* |"'
    print ("SE HA DETECTADO UN STRING MAL FORMADO EN LA LINEA "+str(t.lineno)+ " "+t.value)
-
-# A regular expression rule with some action code
 
 
 # Define a rule so we can track line numbers
@@ -173,5 +170,6 @@ def t_error(t):
 
 
 lexer=lex.lex()
+
 if __name__ == '__main__':
      lex.runmain()
