@@ -10,6 +10,8 @@ __author__ = 'noescobar'
 # ------------------------------------------------------------
 
 
+import sys
+sys.path.append("../..")
 
 import ply.lex as lex
 
@@ -226,16 +228,7 @@ def t_error(t):
     t.lexer.skip(1)
 
 # Build the lexer
-lexer = lex.lex()
-
-
-def tokenizer() :
-    while True:
-        tok = lexer.token()
-        if not tok:
-            break      # No more input
-        print tok
-
+lex.lex()
 
 if __name__ == '__main__':
 	lex.runmain()
