@@ -3,7 +3,7 @@ __author__ = 'noescobar'
 
 # ------------------------------------------------------------
 # calclex.py
-#
+# *? not greedy statement
 # algo nuevo 
 #  tokenizer for a simple expression evaluator for
 # numbers and +,-,*,/
@@ -61,8 +61,8 @@ tokens = (
 
 
 def t_COMMENT(t):
-    r'/\* (.|\n)* \*/'
-    pass
+    r'/\* (.|\n)*? \*/'
+    t.lexer.lineno += t.value.count('\n')
 
 def t_COMMENTInvalidoL(t):
     r'/\* .* '
@@ -105,17 +105,12 @@ def t_LT(t):
 
 
 def t_FLOATInvalido(t):
-    r"([0-9]+ (\. [0-9]+)? [eE][+-][0-9]+(\.[0-9]+)+?) |((0 | [1-9][0-9]* | 0+[0-9]*) \.\.+ [0-9]+)|((0 | [1-9][0-9]*) \.+ [0-9]+ \.+[0-9]+)+ |((0 | [1-9][0-9]* | 0+[0-9]*) (\.[0-9]+)?[eE][+-][+-]+[0-9\w]+) | (0+[0-9]* \.[0-9]+ ([eE][+-][0-9]+)?) "
+    r'( 0+[0-9]+ \.[0-9]+ ([eE][+-]?[0-9]+)? ) | [0-9]+ (\. [0-9]+)? [eE][+-][+-]+ [0-9] + ((\.[0-9]+)+)? '
     print ("NUMERO FLOTANTE NO VALIDO '"+t.value +"' EN LA LINEA  "+str(t.lineno))
 
 def t_NFLOAT(t):
     r" ((0 | [1-9][0-9]*)([.][0-9]+)? [eE]([+-])?[0-9]+) |((0 | [1-9][0-9]*) \.[0-9]+)"
     return t
-
-#def t_IDInvalido(t):
-#    r'([\d]+[a-zA-Z_][a-zA-Z_0-9]*) | ([a-zA-Z_0-9]+(&|%|\$|!|\?|\#)+ | (&|%|\$|!|\?|\#)+[a-zA-Z_0-9]+ )+ [a-zA-Z_0-9]*'
-#    print ("ID NO VALIDO '"+t.value +"' EN LA LINEA  "+str(t.lineno))
-
 
 def t_ID(t):
     r'[a-zA-Z_][a-zA-Z_0-9]*'
@@ -143,9 +138,9 @@ def t_STRING(t):
                 pass
             else:
                 bolean = True
-                a= i+t.value[pos]
-                d=a.encode('string_escape').replace('\\\\','\\')
-                print ("SE HA DETECTADO UN CARACTER DE ESCAPE ("+d+") DESCONOCIDO EN LA LINEA "+str(t.lineno))
+                a = i+t.value[pos]
+               # d = a.encode('string_escape').replace('\\\\', '\\') <- esto no me funciona en mi pc y la idea es que funcione en cualquiera
+                print ("SE HA DETECTADO UN CARACTER DE ESCAPE ("+a+") DESCONOCIDO EN LA LINEA "+str(t.lineno))
     if(not bolean):
         return t
 
@@ -165,7 +160,7 @@ t_ignore  = ' \t'
 
 # Manejo de errores
 def t_error(t):
-	print ("linea '%d': caracter ilegal '%s'" % (t.lexer.lineno, t.value[0]))
+	print ("linea %d: caracter ilegal '%s'" % (t.lexer.lineno, t.value[0]))
 	t.lexer.skip(1)
 
 
