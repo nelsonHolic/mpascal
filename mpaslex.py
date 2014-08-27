@@ -145,7 +145,7 @@ def t_STRING(t):
         return t
 
 def t_STRINGInvalida(t):
-   r'" .* |"'
+   r'"(.|\n)*|"'
    print ("SE HA DETECTADO UN STRING MAL FORMADO EN LA LINEA "+str(t.lineno)+ " "+t.value)
 
 
