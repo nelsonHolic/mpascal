@@ -128,19 +128,30 @@ def t_NINT(t):
     return t
 
 def t_STRING(t):
-    r'" .* "'
+    r'"(\\\"|.)*?[^\\]"'
     pos = 0
     bolean = False
+    i=0
+    while(i < len(t.value)):
+        if (t.value[i] == '\\'):
+                    if(t.value[i+1] == 'n' or t.value[i+1] == '"' or t.value[i+1] == '\\' )  :
+                        print
+                        if (t.value[i] == '\\'):
+                            i += 1
+                    else:
+                        bolean = True
+                        if  (i+1) != (len(t.value)-1):
+                            a = t.value[i]+t.value[i+1]
+                            print ("SE HA DETECTADO UN CARACTER DE ESCAPE ("+a+") DESCONOCIDO EN LA LINEA "+str(t.lineno))
+                        else:
+                            a = i
+                            print ("SE HA DETECTADO UN CARACTER DE ESCAPE INCOMPLETO")
+        i += 1
+
     for i in t.value :
         pos +=1
-        if (i == '\\'):
-            if(t.value[pos] == 'n' or t.value[pos] == '"' or t.value[pos] == '\\' ):
-                pass
-            else:
-                bolean = True
-                a = i+t.value[pos]
-               # d = a.encode('string_escape').replace('\\\\', '\\') <- esto no me funciona en mi pc y la idea es que funcione en cualquiera
-                print ("SE HA DETECTADO UN CARACTER DE ESCAPE ("+a+") DESCONOCIDO EN LA LINEA "+str(t.lineno))
+
+
     if(not bolean):
         return t
 
