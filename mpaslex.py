@@ -65,7 +65,7 @@ def t_COMMENT(t):
     t.lexer.lineno += t.value.count('\n')
 
 def t_COMMENTInvalidoL(t):
-    r'/\* .* '
+    r'/\* (.|\n)* '
     print ("SE HA DETECTADO UN COMENTARIO SIN TERMINAR EN LA LINEA "+str(t.lineno))
 
 def t_COMMENTInvalidoR(t):
