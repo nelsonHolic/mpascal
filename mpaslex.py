@@ -105,7 +105,7 @@ def t_LT(t):
 
 
 def t_FLOATInvalido(t):
-    r'( 0+[0-9]+ \.[0-9]+ ([eE][+-]?[0-9]+)? ) | [0-9]+ (\. [0-9]+)? [eE][+-][+-]+ [0-9] + ((\.[0-9]+)+)? '
+    r'( 0+[0-9]+ (\.[0-9]+)+ ([eE][+-]?[0-9]+)? )|[0-9]+ \.[0-9]+ (\.[0-9]+)+| [0-9]+ (\. [0-9]+)? [eE][+-][+-]+ [0-9] + ((\.[0-9]+)+)? '
     print ("NUMERO FLOTANTE NO VALIDO '"+t.value +"' EN LA LINEA  "+str(t.lineno))
 
 def t_NFLOAT(t):
@@ -119,7 +119,7 @@ def t_ID(t):
     return t
 
 def t_INTInvalido(t):
-    r'0+[1-9]+'
+    r'0+[0-9]+'
     print ("NUMERO ENTERO NO VALIDO '"+t.value +"' EN LA LINEA  "+str(t.lineno))
 
 # A regular expression rule with some action code
