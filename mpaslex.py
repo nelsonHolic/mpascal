@@ -128,7 +128,7 @@ def t_NINT(t):
     return t
 
 def t_STRING(t):
-    r'"(\\\"|.)*?[^\\]"'
+    r'"([^\\\n]|(\\[^\n]))*?"'
     pos = 0
     bolean = False
     i=0
