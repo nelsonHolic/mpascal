@@ -1,0 +1,271 @@
+Gramática compiladores
+S : {program}
+
+Sigma: {G,GE,L,LE,E,NE,’;’,’(‘,’)’,’[‘,’]’,’:’,’:=’,PRINT,RETURN,WHILE,THEN,DO,BEGIN,END,SKIP,BREAK,FUN,ID,STRING,ELSE,IF,READ,WRITE,OR,AND,NOT,INT,FLOAT,’+’,’-’,’/’,’*’}
+
+U :
+{defvar,tipo,digito,int,float,expresion,valor,comparador,logica,assign,statement,args,explog,funname,parameters}
+
+Reglas P:
+program : program fun | fun
+;
+
+fun : FUN funname  ‘(‘ parameters ‘)’ locals  BEGIN  statement END
+| FUN funname’(‘’)’ locals BEGIN statements END
+;
+
+parameters : defvar ‘,’ parameters
+| defvar
+;
+
+args :  valor ‘,’ args
+| valor
+;
+
+locals : defvar ‘;’ locals
+| fun ‘;’ locals
+| fun ‘;’
+| defvar ‘;’
+;
+
+statement : WHILE logica  DO BEGIN statements END
+| IF logica THEN statements ELSE statements
+| IF logica THEN statements
+| SKIP
+| BREAK
+| RETURN expresion
+| PRINT ’(‘ ‘\“‘ string ’\”’ ’)’
+| WRITE ‘(‘ expresion ’)’
+| READ ‘(‘ ID‘)’
+| BEGIN  statements   END
+| expresion
+| assign
+| defvar
+;
+
+statements : statement ‘;’ statements | statement
+
+funname :  ID ;
+
+valor : ID
+| int
+|  float
+| expresion
+| number
+;
+
+defvar :  ID ‘:’  tipo
+| ID ‘:’ tipo ‘[‘ valor ‘]’
+;
+
+assign :  ID ‘:=’  valor | ID ‘:=’  ID
+| ID ’[‘ valor ’]’ ‘:=’ valor
+| ID ‘[‘ valor ‘]’ ‘:=’ ID ‘[‘ valor ‘]’
+;
+
+tipo : int
+| float
+| number
+ ;
+
+int : digito
+| digito int
+ ;
+
+float :   int‘.’ int
+| int ‘e’  ‘+’int
+|int ‘e’ ‘-’ int
+| int ‘E’ ‘+’ int
+| int ‘E’ ‘-’ int
+|int ‘.’ int ‘e’  ‘+’int
+| int ‘.’ int ‘e’ ‘-’ int
+| int ‘.’ int ‘E’ ‘+’ int
+| int ‘.’ int ‘E’ ‘-’ int
+;
+
+number : int
+| float
+;
+
+comentario  : string \n comentario
+|string
+;
+
+expresion : valor ‘+’  expresion
+ |  valor ‘-’ expresion
+|  valor ‘/’ expresion
+| valor  ‘*’ expresion
+| INT’(‘ valor ‘)’
+| FLOAT ‘(‘ valor ‘)’
+| funname  ‘(‘ args ‘)’
+| funname’(‘’)’
+| valor
+;
+
+comparador  : ‘<’
+| ‘>‘
+| ‘>=’
+|  ‘<=’
+|  ‘==’
+|   ‘!=’
+;
+
+explog : OR
+| AND
+|  NOT
+;
+
+relacion : expresion comparador expresion
+;
+
+logica : relacion  explog logica
+| relacion explog ‘(‘ logica ‘)’
+|relacion
+;
+
+STRING: r’(\w| \s| &| !| ¡ | \? | \( | \) | \/| \| \"| \'| ¿| \%| \+| \-| \.| \:| \;| \#|\\|^\n|\*|\t)*
+;
+
+ID :  r'[a-zA-Z_]+[\w|_]*’;
+
+DIGITO : r’(0-9)’ ;
+
+
+
+
+BNFE
+
+S : {program}
+
+Sigma: {G,GE,L,LE,E,NE,’;’,’(‘,’)’,’[‘,’]’,’:’,’:=’,PRINT,RETURN,WHILE,THEN,DO,BEGIN,END,SKIP,BREAK,FUN,ID,STRING,ELSE,IF,READ,WRITE,OR,AND,NOT,INT,FLOAT,’+’,’-’,’/’,’*’}
+
+U :
+{defvar,tipo,digito,int,float,expresion,valor,comparador,logica,assign,statement,args,explog,funname,parameters}
+
+
+Reglas P:
+program : fun+
+;
+
+
+fun : FUN funname  ‘(‘ parameters ? ‘)’ locals  BEGIN  statements END
+;
+
+
+parameters : (defvar ‘,’ )* defvar
+;
+
+
+args :  (valor ‘,’)* valor
+;
+
+
+locals : ((defvar ';' )* (fun ';' ) *)*
+;
+
+
+statement : WHILE logica  DO statements
+| IF logica THEN statements ELSE statements
+| IF logica THEN statements
+| SKIP
+| BREAK
+| RETURN expresion
+| PRINT ’(‘ ‘\“‘ string ’\”’ ’)’
+| WRITE ‘(‘ expresion ’)’
+| READ ‘(‘ ID‘)’
+| BEGIN  statements   END
+| expresion
+| assign
+| defvar
+;
+
+
+statements : (statement ‘;’ )* statement
+;
+
+funname :  ID ;
+
+
+valor : ID
+| int
+| float
+| expresion
+| number
+;
+
+defvar :  ID ‘:’  tipo
+| ID ‘:’ tipo ‘[‘ valor ‘]’
+;
+
+
+assign :  ID ‘:=’  valor | ID ‘:=’  ID
+| ID ’[‘ valor ’]’ ‘:=’ valor
+| ID ‘[‘ valor ‘]’ ‘:=’ ID ‘[‘ valor ‘]’
+;
+
+
+tipo : int
+| float
+| number
+;
+
+int : digito+
+;
+
+float :   int‘.’ int
+| int ‘e’  ‘+’int
+|int ‘e’ ‘-’ int
+| int ‘E’ ‘+’ int
+| int ‘E’ ‘-’ int
+|int ‘.’ int ‘e’  ‘+’int
+| int ‘.’ int ‘e’ ‘-’ int
+| int ‘.’ int ‘E’ ‘+’ int
+| int ‘.’ int ‘E’ ‘-’ int
+;
+
+number : int
+| float
+;
+
+
+comentario  : (string \n)* string
+;
+
+
+expresion :valor ( (‘+’ | ‘-’ | ‘/’ |  ‘*’) valor) +
+| int’(‘ valor ‘)’
+| float ‘(‘ valor ‘)’
+| funname  ‘(‘ args ‘)’
+| funname’(‘’)’
+| valor
+;
+
+comparador  : ‘<’
+| ‘>‘
+| ‘>=’
+|  ‘<=’
+|  ‘==’
+|   ‘!=’
+;
+
+explog : OR
+| AND
+|  NOT
+;
+
+relacion : expresion comparador expresion
+;
+
+
+logica : relacion  (explog ( '('relacion ')' | relacion ) )+
+| relacion
+;
+
+STRING: r’(\w| \s| &| !| ¡ | \? | \( | \) | \/| \| \"| \'| ¿| \%| \+| \-| \.| \:| \;| \#|\\|^\n|\*|\t)*
+;
+
+
+ID :  r'[a-zA-Z_] [a-zA-Z_0-9]*’;
+
+
+DIGITO : r’(0-9)’ ;
