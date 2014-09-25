@@ -32,30 +32,45 @@ def assign(p) :
     | assign : ID '[' valor ']' ASIGSIM valor
     | ID '[' valor ']' ASIGSIM ID '[' valor ']'
     '''
-def p_expression(p):
+def p_expression_plus(p):
     '''expression : valor "+" expression
-    | expression : valor '-' expression
-    | expression : valor '*' epression
-    | expression : valor '/'
-    | expression : INT '(' valor ')'
-    | expression : FLOAT '(' valor ')'
-    | expression : funname '(' args ')'
-    | expression : funname '('')'
-    | expression : valor
+
     '''
-    if p[2] == '+' :
-        p[0] = p[1] + p[3]
-    elif p[2] == '-':
-        p[0] = p[1] - p[3]
-    elif p[2] == '/':
-        p[0] = p[1] / p[3]
-    elif p[2] == '*':
-        p[0] = p[1] * p[3]
-    elif p[1] == "INT" :
-        p[0] = int(p[3])
-    elif p[1] == "FLOAT" :
-        p[0] = float(p[3])
-    elif 1: p[0] = p[1]
+         p[0] = p[1] + p[3]
+
+def p_expression_minus(p):
+    '''
+    expression : valor '-' expression
+    '''
+     p[0] = p[1] - p[3]
+
+def p_expression_times(p):
+    '''
+    expression : valor '*' expression
+    '''
+     p[0] = p[1] * p[3]
+
+def p_expression_divide(p):
+    '''
+    expression : valor '/' expression
+    '''
+     p[0] = p[1] / p[3]
+
+def p_expression_int(p):
+    '''
+    expression : INT '(' valor ')'
+    '''
+     p[0] = int(p[3])
+
+def p_expression_float(p):
+    '''
+    expression : FLOAT '(' valor ')'
+    '''
+     p[0] = float(p[3])
+
+    #| expression : funname '(' args ')'
+    #| expression : funname '('')'
+    #| expression : valor
 
 
 def p_term_times(p):
