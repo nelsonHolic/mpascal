@@ -18,12 +18,12 @@ parameters : defvar ‘,’ parameters
 | defvar
 ;
 
-args :  valor ‘,’ args
+args :  args ‘,’ valor
 | valor
 ;
 
-locals : defvar ‘;’ locals
-| fun ‘;’ locals
+locals : locals  defvar ';'
+| locals fun ';'
 | fun ‘;’
 | defvar ‘;’
 ;
@@ -34,7 +34,7 @@ statement : WHILE logica  DO BEGIN statements END
 | SKIP
 | BREAK
 | RETURN expresion
-| PRINT ’(‘ ‘\“‘ string ’\”’ ’)’
+| PRINT ’(‘ ‘\“‘ STRING ’\”’ ’)’
 | WRITE ‘(‘ expresion ’)’
 | READ ‘(‘ ID‘)’
 | BEGIN  statements   END
@@ -43,7 +43,7 @@ statement : WHILE logica  DO BEGIN statements END
 | defvar
 ;
 
-statements : statement ‘;’ statements | statement
+statements : statements ';' statement  | statement
 
 funname :  ID ;
 
@@ -68,33 +68,21 @@ tipo : int
 | number
  ;
 
-int : digito
-| digito int
+int : INT
  ;
 
-float :   int‘.’ int
-| int ‘e’  ‘+’int
-|int ‘e’ ‘-’ int
-| int ‘E’ ‘+’ int
-| int ‘E’ ‘-’ int
-|int ‘.’ int ‘e’  ‘+’int
-| int ‘.’ int ‘e’ ‘-’ int
-| int ‘.’ int ‘E’ ‘+’ int
-| int ‘.’ int ‘E’ ‘-’ int
+float :  FLOAT
 ;
 
 number : int
 | float
 ;
 
-comentario  : string \n comentario
-|string
-;
 
-expresion : valor ‘+’  expresion
- |  valor ‘-’ expresion
-|  valor ‘/’ expresion
-| valor  ‘*’ expresion
+expresion : expresion ‘+’ valor
+ | expresion '-'valor
+|  expresion ‘/’ valor
+| expresion  ‘*’ valor
 | INT’(‘ valor ‘)’
 | FLOAT ‘(‘ valor ‘)’
 | funname  ‘(‘ args ‘)’
@@ -118,18 +106,10 @@ explog : OR
 relacion : expresion comparador expresion
 ;
 
-logica : relacion  explog logica
-| relacion explog ‘(‘ logica ‘)’
+logica : logica explog relacion
+| '(' logica explog ')' relacion
 |relacion
 ;
-
-STRING: r’(\w| \s| &| !| ¡ | \? | \( | \) | \/| \| \"| \'| ¿| \%| \+| \-| \.| \:| \;| \#|\\|^\n|\*|\t)*
-;
-
-ID :  r'[a-zA-Z_]+[\w|_]*’;
-
-DIGITO : r’(0-9)’ ;
-
 
 
 
@@ -144,6 +124,7 @@ U :
 
 
 Reglas P:
+
 program : fun+
 ;
 
@@ -209,18 +190,10 @@ tipo : int
 | number
 ;
 
-int : digito+
+int : INT
 ;
 
-float :   int‘.’ int
-| int ‘e’  ‘+’int
-|int ‘e’ ‘-’ int
-| int ‘E’ ‘+’ int
-| int ‘E’ ‘-’ int
-|int ‘.’ int ‘e’  ‘+’int
-| int ‘.’ int ‘e’ ‘-’ int
-| int ‘.’ int ‘E’ ‘+’ int
-| int ‘.’ int ‘E’ ‘-’ int
+float :  FLOAT
 ;
 
 number : int
@@ -228,8 +201,6 @@ number : int
 ;
 
 
-comentario  : (string \n)* string
-;
 
 
 expresion :valor ( (‘+’ | ‘-’ | ‘/’ |  ‘*’) valor) +
@@ -260,12 +231,3 @@ relacion : expresion comparador expresion
 logica : relacion  (explog ( '('relacion ')' | relacion ) )+
 | relacion
 ;
-
-STRING: r’(\w| \s| &| !| ¡ | \? | \( | \) | \/| \| \"| \'| ¿| \%| \+| \-| \.| \:| \;| \#|\\|^\n|\*|\t)*
-;
-
-
-ID :  r'[a-zA-Z_] [a-zA-Z_0-9]*’;
-
-
-DIGITO : r’(0-9)’ ;

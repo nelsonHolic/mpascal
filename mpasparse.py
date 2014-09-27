@@ -4,6 +4,11 @@ __author__ = 'noescobar,rass,anagui'
 import ply.yacc as yacc
 
 
+precedence = (
+    ('left', '+', '-'),
+    ('left', '*', '/'),
+)
+
 def p_funcion_args(p):
     '''
     fun : FUN funname '(' parameters ')' locals BEGIN statements END
@@ -152,7 +157,7 @@ def p_expression_fun(p):
     '''
     expression : funname '('')'
     '''
-    p[0]=p[1:]
+    p[0]=p[1]
 
 def  p_expresion_valor(p):
     '''
