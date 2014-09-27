@@ -168,7 +168,8 @@ class RecursiveDescentParser(object):
 
 
 precedence = (
-
+    ('right','IFRule'),
+    ('left','semicolonSR'),
 )
 
 
@@ -212,13 +213,13 @@ def p_statement_WHILE(p):
 
 def p_statement_IF(p):
     '''
-    statement : IF logica THEN statements
+    statement : IF logica THEN statements %prec IFRule
     '''
     p[0] = p[1:]
 
 def p_statement_IF_ELSE(p):
     '''
-    statement : IF logica THEN statements ELSE statements
+    statement : IF logica THEN statements ELSE statements %prec semicolonSR
     '''
     p[0] = p[1:]
 
