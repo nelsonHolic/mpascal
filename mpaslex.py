@@ -42,7 +42,6 @@ PALABRAS_RESERVADAS = (
 tokens = (
     'NUMBER',
     'ID',
-    'IDInvalido',
     'GT',
     'GE',
     'LT',

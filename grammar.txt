@@ -4,7 +4,7 @@ S : {program}
 Sigma: {G,GE,L,LE,E,NE,’;’,’(‘,’)’,’[‘,’]’,’:’,’:=’,PRINT,RETURN,WHILE,THEN,DO,BEGIN,END,SKIP,BREAK,FUN,ID,STRING,ELSE,IF,READ,WRITE,OR,AND,NOT,INT,FLOAT,’+’,’-’,’/’,’*’}
 
 U :
-{defvar,tipo,digito,int,float,expresion,valor,comparador,logica,assign,statement,args,explog,funname,parameters}
+{defvar,tipo,digito,int,float,expression,valor,comparador,logica,assign,statement,args,explog,funname,parameters}
 
 Reglas P:
 program : program fun | fun
@@ -33,12 +33,12 @@ statement : WHILE logica  DO BEGIN statements END
 | IF logica THEN statements
 | SKIP
 | BREAK
-| RETURN expresion
+| RETURN expression
 | PRINT ’(‘ ‘\“‘ STRING ’\”’ ’)’
-| WRITE ‘(‘ expresion ’)’
+| WRITE ‘(‘ expression ’)’
 | READ ‘(‘ ID‘)’
 | BEGIN  statements   END
-| expresion
+| expression
 | assign
 | defvar
 ;
@@ -48,9 +48,8 @@ statements : statements ';' statement  | statement
 funname :  ID ;
 
 valor : ID
-| int
-|  float
-| expresion
+| INT
+| FLOAT
 | number
 ;
 
@@ -58,14 +57,13 @@ defvar :  ID ‘:’  tipo
 | ID ‘:’ tipo ‘[‘ valor ‘]’
 ;
 
-assign :  ID ‘:=’  valor | ID ‘:=’  ID
+assign :  ID ‘:=’  valor
 | ID ’[‘ valor ’]’ ‘:=’ valor
 | ID ‘[‘ valor ‘]’ ‘:=’ ID ‘[‘ valor ‘]’
 ;
 
 tipo : int
 | float
-| number
  ;
 
 int : INT
@@ -74,15 +72,10 @@ int : INT
 float :  FLOAT
 ;
 
-number : int
-| float
-;
-
-
-expresion : expresion ‘+’ valor
- | expresion '-'valor
-|  expresion ‘/’ valor
-| expresion  ‘*’ valor
+expression : expression ‘+’ valor
+| expression '-'valor
+|  expression ‘/’ valor
+| expression  ‘*’ valor
 | INT’(‘ valor ‘)’
 | FLOAT ‘(‘ valor ‘)’
 | funname  ‘(‘ args ‘)’
@@ -103,7 +96,7 @@ explog : OR
 |  NOT
 ;
 
-relacion : expresion comparador expresion
+relacion : expression comparador expression
 ;
 
 logica : logica explog relacion
@@ -120,7 +113,7 @@ S : {program}
 Sigma: {G,GE,L,LE,E,NE,’;’,’(‘,’)’,’[‘,’]’,’:’,’:=’,PRINT,RETURN,WHILE,THEN,DO,BEGIN,END,SKIP,BREAK,FUN,ID,STRING,ELSE,IF,READ,WRITE,OR,AND,NOT,INT,FLOAT,’+’,’-’,’/’,’*’}
 
 U :
-{defvar,tipo,digito,int,float,expresion,valor,comparador,logica,assign,statement,args,explog,funname,parameters}
+{defvar,tipo,digito,int,float,expression,valor,comparador,logica,assign,statement,args,explog,funname,parameters}
 
 
 Reglas P:
@@ -150,12 +143,12 @@ statement : WHILE logica  DO statements
 | IF logica THEN statements
 | SKIP
 | BREAK
-| RETURN expresion
+| RETURN expression
 | PRINT ’(‘ ‘\“‘ string ’\”’ ’)’
-| WRITE ‘(‘ expresion ’)’
+| WRITE ‘(‘ expression ’)’
 | READ ‘(‘ ID‘)’
 | BEGIN  statements   END
-| expresion
+| expression
 | assign
 | defvar
 ;
@@ -170,7 +163,7 @@ funname :  ID ;
 valor : ID
 | int
 | float
-| expresion
+| expression
 | number
 ;
 
@@ -203,7 +196,7 @@ number : int
 
 
 
-expresion :valor ( (‘+’ | ‘-’ | ‘/’ |  ‘*’) valor) +
+expression :valor ( (‘+’ | ‘-’ | ‘/’ |  ‘*’) valor) +
 | int’(‘ valor ‘)’
 | float ‘(‘ valor ‘)’
 | funname  ‘(‘ args ‘)’
@@ -224,7 +217,7 @@ explog : OR
 |  NOT
 ;
 
-relacion : expresion comparador expresion
+relacion : expression comparador expression
 ;
 
 
