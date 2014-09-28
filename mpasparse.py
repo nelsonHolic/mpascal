@@ -6,6 +6,7 @@ import ply.yacc as yacc
 
 from mpaslex import tokens
 from mpaslex import lexer
+import sys
 
 
 class Node():
@@ -26,7 +27,7 @@ class Node():
 
 # olarte or may be Pao
 def dump_tree(n, indent = ''):
-    #print n
+
     if not hasattr(n, 'datatype'):
         datatype = ''
     else:
@@ -48,17 +49,19 @@ def dump_tree(n, indent = ''):
             dump_tree(c, indent + '  |--')
 
 precedence = (
+    ('left','ELSE'),
+    ('left', 'OR','NOT', 'AND'),
+    ('left','+','-'),
+    ('left','*','/'),
     ('right','IFRule'),
-    ('left','semicolonSR'),
     ('left','SEMICOLON'),
 )
 
-def p_program(p) :
+def p_program_funciones(p) :
     '''
     program : program fun
     '''
-    p[1].append(p[2])
-    p[0] = p[1]
+    p[0] = Node(name="program", children= [p[1],p[2]])
     #p[0]=p[1:]
 
 def p_program(p) :
@@ -113,6 +116,13 @@ def p_statement_WHILE(p):
     p[0] = Node(name = 'While',children = [p[2], p[4]])
     #p[0] = p[1:]
 
+def p_statement_IF_ELSE(p):
+    '''
+    statement : IF logica THEN statements ELSE statements
+    '''
+    p[0] = Node(name = 'IFELSE',children = [p[2], p[4]])
+    #p[0] = p[1:]
+
 def p_statement_IF(p):
     '''
     statement : IF logica THEN statements %prec IFRule
@@ -120,12 +130,7 @@ def p_statement_IF(p):
     p[0] = Node(name = 'IF',children = [p[2], p[4]])
     #p[0] = p[1:]
 
-def p_statement_IF_ELSE(p):
-    '''
-    statement : IF logica THEN statements ELSE statements %prec semicolonSR
-    '''
-    p[0] = Node(name = 'IFELSE',children = [p[2], p[4]])
-    #p[0] = p[1:]
+
 
 def p_statement_SKIP(p):
     '''
@@ -151,9 +156,9 @@ def p_statement_RETURN(p):
 
 def p_statement_PRINT(p):
     '''
-    statement : PRINT '(' '\"' STRING '\"' ')'
+    statement : PRINT '(' STRING ')'
     '''
-    p[0] = Node(name = 'statement',leaf= p[4])
+    p[0] = Node(name = 'PRINT',leaf= p[3])
     #p[0] = p[1:]
 
 
@@ -161,7 +166,7 @@ def p_statement_WRITE(p):
     '''
     statement : WRITE '(' expression ')'
     '''
-    p[0] = Node(name = 'statementWRITE',children= p[2])
+    p[0] = Node(name = 'WRITE',children= [p[3]])
     #p[0] = p[1:]
 
 
@@ -169,7 +174,14 @@ def p_statement_READ(p):
     '''
     statement : READ '(' ID ')'
     '''
-    p[0] = Node(name = 'statementREAD',leaf= p[3])
+    p[0] = Node(name = 'READ',leaf= p[3])
+    #p[0] = p[1:]
+
+def p_statement_READ_vect(p):
+    '''
+    statement : READ '(' ID '[' expression ']' ')'
+    '''
+    p[0] = Node(name = 'READ',children= [p[5]],leaf= p[3])
     #p[0] = p[1:]
 
 
@@ -199,7 +211,8 @@ def p_locals_defvarrecur(p):
     '''
     locals : locals  defvar ';'
     '''
-    p[0]=Node("varlist",[p[1],p[2]])
+    p[1].append(p[2])
+    p[0]= p[1]
 
 
 def p_locals_funrecur(p):
@@ -215,29 +228,43 @@ def p_locals_fun(p):
     '''
     locals : fun ';'
     '''
-    p[0] = p[1]
+    p[0] = Node("fun",[p[1]])
     #p[0] = p[1:]
 
 def p_locals_defvar(p):
     '''
     locals : defvar ';'
     '''
-    p[0] = p[1]
+    p[0] = Node("locals",[p[1]])
     #p[0] = p[1:]
 
 def p_logica_simple(p):
     '''
-    logica : logica explog relacion
+    logica : logica OR logica
+    logica : logica AND logica
     '''
     p[0] = Node(name = 'logica',children= [p[1],p[3]],leaf=p[2])
     #p[0] = p[1:]
 
+
+def p_logica_simple_not(p):
+    '''
+    logica : NOT logica
+    '''
+    p[0] = Node(name = 'logica',children= [p[2]],leaf=p[2])
+    #p[0] = p[1:]
+
+#problema de anidacion a la derecha
+
+
 def p_logica_complex(p):
     '''
-    logica : '(' logica ')' explog  relacion
+    logica : '(' logica ')'
     '''
-    p[0] = Node(name = 'logica',children= [p[1],p[5]],leaf=p[2])
+    p[0] = p[2]
     #p[0] = p[1:]
+
+
 
 
 def p_logica_relacion(p):
@@ -301,6 +328,13 @@ def p_valor_ID(p):
     p[0] = Node(name = 'Variable',leaf= p[1])
     #p[0]=p[1]
 
+def p_valor_ID_vect(p):
+    '''
+    valor : ID '[' expression ']'
+    '''
+    p[0] = Node(name = 'Variable',children= [p[3]],leaf=p[1])
+    #p[0]=p[1]
+
 def p_valor_NINT(p):
     '''
     valor : NINT
@@ -344,40 +378,20 @@ def p_tipo_FLOAT(p):
     p[0] = Node(name = 'tipo',leaf = p[1])
     #p[0] = p[1]
 
-def p_explog_or(p) :
-    '''
-    explog : OR
-    '''
-    p[0] = Node(name = 'explog',leaf = p[1])
-    #p[0]=p[1]
-
-def p_explog_NOT(p) :
-    '''
-    explog : NOT
-    '''
-    p[0] = Node(name = 'explog',leaf = p[1])
-    p[0]=p[1]
-
-def p_explog_AND(p) :
-    '''
-    explog : AND
-    '''
-    p[0] = Node(name = 'explog',leaf = p[1])
-    p[0]=p[1]
-
 
 def p_parameters_multi(p):
     '''
     parameters : parameters ',' defvar
     '''
-    p[0]=Node("parameterslist",[p[1],p[3]])
+    p[1].append(p[3])
+    p[0]= p[1]
     #p[0] = p[1:]
 
 def p_parameters_unique(p) :
     '''
     parameters : defvar
     '''
-    p[0] = p[1]
+    p[0] = Node('lista de parametros',children= [p[1]])
     #p[0] = p[1]
 
 def p_assign_val(p):
@@ -387,24 +401,16 @@ def p_assign_val(p):
     p[0] = Node(name = 'assign',children  = [p[3]],leaf=p[1])
     #p[0]=p[1:]
 
-
 def p_assign_vec(p):
     '''
-    assign : ID '[' valor ']' ASIGSIM valor
+    assign : ID '[' expression ']' ASIGSIM expression
     '''
     p[0] = Node(name = 'assign',children = [p[3],p[6]],leaf=p[1])
     #p[0]=p[1:]
 
-def p_assign_vtv(p):
-    '''
-    assign : ID '[' valor ']' ASIGSIM ID '[' valor ']'
-    '''
-    p[0] = Node(name = 'assign',children = [p[3],p[6],p[8]],leaf=p[1])
-    #p[0]=p[1:]
-
 def p_expression_plus(p):
     '''
-    expression : expression "+" valor
+    expression : expression "+" expression
     '''
     p[0] = Node(name = 'expression',children = [p[1],p[3]],leaf=p[2])
     #p[0] = p[1] + p[3]
@@ -412,7 +418,7 @@ def p_expression_plus(p):
 
 def p_expression_minus(p):
     '''
-    expression : expression '-' valor
+    expression : expression '-' expression
     '''
     p[0] = Node(name = 'expression',children = [p[1],p[3]],leaf=p[2])
     #p[0] = p[1] - p[3]
@@ -421,10 +427,19 @@ def p_expression_minus(p):
 
 def p_expression_times(p):
     '''
-    expression : expression '*' valor
+    expression : expression '*' expression
     '''
     p[0] = Node(name = 'expression',children = [p[1],p[3]],leaf=p[2])
     #p[0] = p[1] * p[3]
+
+def p_expression_parent(p):
+    '''
+    expression : '(' expression ')'
+    '''
+    p[0] = p[2]
+    #p[0] = p[1] * p[3]
+
+
 
 
 def p_expression_divide(p):
@@ -459,15 +474,14 @@ def p_expression_funargs(p):
 
 def p_args_MULTI(p):
     '''
-    args : args ',' valor
+    args : args ',' expression
     '''
-    p[1].append(p[3])
-    p[0] = p[1]
+    p[0] = Node(name = 'argumentos',children = [p[1], p[3]])
     #p[0]=p[1:]
 
 def p_args(p):
     '''
-    args : valor
+    args : expression
     '''
     p[0]=p[1]
     #p[0]=p[1]
@@ -493,8 +507,31 @@ def p_error(p):
 
 parse = yacc.yacc()
 
-dump_tree(parse.parse("fun lol (d:int,f:float)  x:int; y:int; begin  holamundo(5,3); 35 > 2; y:=5 end ",debug=1))
+
+if __name__ == '__main__':
+    try:
+        filename = sys.argv[1]
+        f = open(filename)
+        data = f.read()
+        f.close()
+    except IndexError:
+        sys.stdout.write("ha habido un error en la lectura del archivo. Leyendo en entrada estandar:\n")
+        data = sys.stdin.read()
+    dibujito = parse.parse(data,debug = 0)
+    dump_tree(dibujito)
 
 
 
+#
+# dump_tree(parse.parse('''fun lol(d:int,f:float)
+#                       x:int; y:int;
+#                       begin  holamundo(5,3);
+#                         while ((2 <= 3) and  35 > 2) or 3==2
+#                         do skip; y:=5
+#                       end
+#                       fun XD()
+#                       dd:int; lolol:float;
+#                       begin
+#                         skip
+#                       end'''))
 
