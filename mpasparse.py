@@ -165,7 +165,27 @@ class RecursiveDescentParser(object):
         self.nexttok = None   # Siguiente simbol
         lexer.input(text)
         return self.start()
+# olarte 
+def dump_tree(n, indent = ''):
+    if not hasattr(n, 'datatype'):
+        datatype = ''
+    else:
+        datatype = n.datatype
 
+    if not n.leaf:
+        print ('%s%s  %s' % (indent, n.name, datatype))
+    else:
+        print ('%s%s (%s)  %s' % (indent, n.name, n.leaf, datatype))
+
+    indent = indent.replace('-', ' ')
+    indent = indent.replace('+', ' ')
+
+    for i in range(len(n.children)):
+        c = n.children[i]
+        if i == len(n.children)-1:
+            dump_tree(c, indent + '  +--')
+        else:
+            dump_tree(c, indent + '  |--')
 
 precedence = (
     ('right','IFRule'),
