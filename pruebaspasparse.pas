@@ -1,4 +1,4 @@
-/*fun quicksort(l:int, r:int, a:int[8192])
+fun quicksort(l:int, r:int, a:int[8192])
 i:int;
 j:int;
 x:int;
@@ -63,7 +63,7 @@ i:=i+1
 end;
 write(v[i]);
 print("Éxito\n")
-end*/
+end
 
 fun pruExpression()
     d: int;

@@ -49,7 +49,7 @@ def dump_tree(n, indent = ''):
             dump_tree(c, indent + '  |--')
 
 precedence = (
-    ('left','ELSE'),
+    ('right','ELSE'),
     ('left', 'OR','NOT', 'AND'),
     ('left','+','-'),
     ('left','*','/'),
@@ -77,6 +77,18 @@ def p_funcion_args(p):
     '''
     p[0] = Node(name = 'funcion',children = [p[4], p[6], p[8]],leaf=p[2])
     #p[0]=p[1:]
+
+def p_funcion_arg_sinLocals(p):
+    '''
+    fun : FUN funname '(' parameters ')' BEGIN statements END
+    '''
+    p[0] = Node(name = 'funcion',children = [p[4], p[7]],leaf=p[2])
+
+def p_funcion_sin_locals(p):
+    '''
+    fun : FUN funname '(' ')' BEGIN statements END
+    '''
+    p[0] = Node(name = 'funcion',children = [p[6]],leaf=p[2])
 
 def p_funname(p):
     '''
@@ -432,6 +444,17 @@ def p_expression_times(p):
     p[0] = Node(name = 'expression',children = [p[1],p[3]],leaf=p[2])
     #p[0] = p[1] * p[3]
 
+
+def p_expression_divide(p):
+    '''
+    expression : expression '/' expression
+    '''
+    p[0] = Node(name = 'expression',children = [p[1],p[3]],leaf=p[2])
+    #p[0] = p[1] / p[3]
+
+
+
+
 def p_expression_parent(p):
     '''
     expression : '(' expression ')'
@@ -442,17 +465,30 @@ def p_expression_parent(p):
 
 
 
-def p_expression_divide(p):
+def p_expression_negative(p):
     '''
-    expression : expression '/' valor
+    expression : '-' expression
     '''
-    p[0] = Node(name = 'expression',children = [p[1],p[3]],leaf=p[2])
-    #p[0] = p[1] / p[3]
+    p[0] = p[2]
+    #p[0] = p[1] * p[3]
+
+
+
+
+def p_expression_positive(p):
+    '''
+    expression : '+' expression
+    '''
+    p[0] = p[2]
+    #p[0] = p[1] * p[3]
+
+
+
 
 
 def p_expression_int(p):
     '''
-    expression : INT '(' valor ')'
+    expression : INT '(' expression ')'
     '''
     p[0] = Node(name = 'expression',children = [p[3]],leaf= p[1])
     #p[0] = int(p[3])
@@ -460,7 +496,7 @@ def p_expression_int(p):
 
 def p_expression_float(p):
     '''
-    expression : FLOAT '(' valor ')'
+    expression : FLOAT '(' expression ')'
     '''
     p[0] = Node(name = 'expression',children = [p[3]], leaf = p[1])
     #p[0] = float(p[3])
@@ -518,7 +554,7 @@ if __name__ == '__main__':
         sys.stdout.write("ha habido un error en la lectura del archivo. Leyendo en entrada estandar:\n")
         data = sys.stdin.read()
     dibujito = parse.parse(data,debug = 0)
-    dump_tree(dibujito)
+    #dump_tree(dibujito)
 
 
 
