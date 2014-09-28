@@ -65,14 +65,14 @@ def p_program(p) :
     '''
     program : fun
     '''
-    p[0] = Node(name = 'programfun',children = [p[1]])
+    p[0] = Node(name = 'funcion',children = [p[1]])
     #p[0]=p[1]
 
 def p_funcion_args(p):
     '''
     fun : FUN funname '(' parameters ')' locals BEGIN statements END
     '''
-    p[0] = Node(name = 'fun',children = [p[4], p[6], p[8]],leaf=p[2])
+    p[0] = Node(name = 'funcion',children = [p[4], p[6], p[8]],leaf=p[2])
     #p[0]=p[1:]
 
 def p_funname(p):
@@ -86,7 +86,7 @@ def p_funcion(p):
     '''
      fun : FUN funname  '(' ')' locals  BEGIN  statements END
     '''
-    p[0] = Node(name = 'fun',children = [p[5], p[7]],leaf=p[2])
+    p[0] = Node(name = 'funcion',children = [p[5], p[7]],leaf=p[2])
     #p[0]=p[1:]
 
 
@@ -110,28 +110,28 @@ def p_statement_WHILE(p):
     '''
     statement : WHILE logica  DO statements %prec SEMICOLON
     '''
-    p[0] = Node(name = 'statementWhile',children = [p[2], p[4]])
+    p[0] = Node(name = 'While',children = [p[2], p[4]])
     #p[0] = p[1:]
 
 def p_statement_IF(p):
     '''
     statement : IF logica THEN statements %prec IFRule
     '''
-    p[0] = Node(name = 'statementIf',children = [p[2], p[4]])
+    p[0] = Node(name = 'IF',children = [p[2], p[4]])
     #p[0] = p[1:]
 
 def p_statement_IF_ELSE(p):
     '''
     statement : IF logica THEN statements ELSE statements %prec semicolonSR
     '''
-    p[0] = Node(name = 'statementIFELSE',children = [p[2], p[4]])
+    p[0] = Node(name = 'IFELSE',children = [p[2], p[4]])
     #p[0] = p[1:]
 
 def p_statement_SKIP(p):
     '''
     statement : SKIP
     '''
-    p[0] = Node(name = 'statementSKIP',leaf= p[1])
+    p[0] = Node(name = 'Statement',leaf= p[1])
     #p[0] = p[1]
 
 
@@ -139,21 +139,21 @@ def p_statement_BREAK(p):
     '''
     statement : BREAK
     '''
-    p[0] = Node(name = 'statementBREAK',leaf= p[1])
+    p[0] = Node(name = 'Statement',leaf= p[1])
     #p[0] = p[1]
 
 def p_statement_RETURN(p):
     '''
     statement : RETURN expression
     '''
-    p[0] = Node(name = 'statementRETURN',children=[p[2]])
+    p[0] = Node(name = 'RETURN',children=[p[2]])
     #p[0] = p[2]
 
 def p_statement_PRINT(p):
     '''
     statement : PRINT '(' '\"' STRING '\"' ')'
     '''
-    p[0] = Node(name = 'statementPRINT',leaf= p[4])
+    p[0] = Node(name = 'statement',leaf= p[4])
     #p[0] = p[1:]
 
 
@@ -177,7 +177,7 @@ def p_statement_BEGIN(p):
     '''
     statement : BEGIN  statements   END
     '''
-    p[0] = Node(name = 'statementBEGIN',children= [p[2]])
+    p[0] = Node(name = 'Bloque instrucciones',children= [p[2]])
     #p[0] = p[1:]
 
 def p_statement_expression(p):
@@ -207,7 +207,8 @@ def p_locals_funrecur(p):
     locals : locals fun ';'
     '''
     p[1].append(p[2])
-    p[0] = p[1]
+    p[0]=p[1]
+    #p[0]=Node("funlist",[p[1],p[2]])
     #p[0] = p[1:]
 
 def p_locals_fun(p):
@@ -228,14 +229,14 @@ def p_logica_simple(p):
     '''
     logica : logica explog relacion
     '''
-    p[0] = Node(name = 'logicaSIMPLE',children= [p[1],p[3]],leaf=p[2])
+    p[0] = Node(name = 'logica',children= [p[1],p[3]],leaf=p[2])
     #p[0] = p[1:]
 
 def p_logica_complex(p):
     '''
     logica : '(' logica ')' explog  relacion
     '''
-    p[0] = Node(name = 'logicaCOMPLEX',children= [p[2],p[5]])
+    p[0] = Node(name = 'logica',children= [p[1],p[5]],leaf=p[2])
     #p[0] = p[1:]
 
 
@@ -250,7 +251,7 @@ def p_logica_relacion_GREATER(p):
     '''
     relacion : expression GT expression
     '''
-    p[0] = Node(name = 'logicaRELATION',children= [p[1],p[3]])
+    p[0] = Node(name = 'comparacion',children= [p[1],p[3]],leaf=p[2])
     #p[0] = p[1:]
 
 
@@ -258,7 +259,7 @@ def p_logica_relacion_EQUAL(p):
     '''
     relacion : expression EQ expression
     '''
-    p[0] = Node(name = 'logicaRELATION',children= [p[1],p[3]])
+    p[0] = Node(name = 'comparacion',children= [p[1],p[3]],leaf=p[2])
     #p[0] = p[1:]
 
 
@@ -266,7 +267,7 @@ def p_logica_relacion_LESS(p):
     '''
     relacion : expression LT expression
     '''
-    p[0] = Node(name = 'logicaRELATION',children= [p[1],p[3]])
+    p[0] = Node(name = 'comparacion',children= [p[1],p[3]],leaf=p[2])
     #p[0] = p[1:]
 
 
@@ -274,7 +275,7 @@ def p_logica_relacion_DIFERENT(p):
     '''
     relacion : expression DI expression
     '''
-    p[0] = Node(name = 'logicaRELATION',children= [p[1],p[3]])
+    p[0] = Node(name = 'comparacion',children= [p[1],p[3]],leaf=p[2])
     #p[0] = p[1:]
 
 
@@ -282,7 +283,7 @@ def p_logica_relacion_GEQUAL(p):
     '''
     relacion : expression GE expression
     '''
-    p[0] = Node(name = 'logicaRELATION',children= [p[1],p[3]])
+    p[0] = Node(name = 'comparacion',children= [p[1],p[3]],leaf=p[2])
     #p[0] = p[1:]
 
 
@@ -290,14 +291,14 @@ def p_logica_relacion_LEQUAL(p):
     '''
     relacion : expression LE expression
     '''
-    p[0] = Node(name = 'logicaRELATION',children= [p[1],p[3]])
+    p[0] = Node(name = 'comparacion',children= [p[1],p[3]],leaf=p[2])
     #p[0] = p[1:]
 
 def p_valor_ID(p):
     '''
     valor : ID
     '''
-    p[0] = Node(name = 'valor',leaf= p[1])
+    p[0] = Node(name = 'Variable',leaf= p[1])
     #p[0]=p[1]
 
 def p_valor_NINT(p):
@@ -326,7 +327,7 @@ def p_defvar_vect(p):
     '''
     defvar : ID ':' tipo '[' valor ']'
     '''
-    p[0] = Node(name = 'defvar',children = [p[1], p[3], p[5]])
+    p[0] = Node(name = 'defvar',children = [ p[3], p[5]],leaf=p[1])
     #p[0] = p[1:]
 
 def p_tipo_INT(p):
@@ -453,7 +454,7 @@ def p_expression_funargs(p):
     '''
     expression : funname '(' args ')'
     '''
-    p[0] = Node(name = 'expression',children = [p[3]], leaf=p[1])
+    p[0] = Node(name = 'Funcion',children = [p[3]], leaf=p[1])
     #p[0]=p[1:]
 
 def p_args_MULTI(p):
@@ -492,7 +493,7 @@ def p_error(p):
 
 parse = yacc.yacc()
 
-dump_tree(parse.parse("fun lol (d:int,f:float) x:int; y:int; begin while 1<0 do begin skip; break; x:=2+3; x:=3*3+4*2*5+3 end; y:=5 end"))
+dump_tree(parse.parse("fun lol (d:int,f:float)  x:int; y:int; begin  holamundo(5,3); 35 > 2; y:=5 end ",debug=1))
 
 
 

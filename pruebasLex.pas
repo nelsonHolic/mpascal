@@ -1,4 +1,7 @@
 fun lol ()
 x:int;
-x=3*(4+5);
+begin
+x:=3*(4+5);
+if x>3 then
+skip
 end
