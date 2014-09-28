@@ -172,6 +172,17 @@ precedence = (
     ('left','semicolonSR'),
 )
 
+def p_program(p) :
+    '''
+    program : program fun
+    '''
+    p[0]=p[1:]
+
+def p_program(p) :
+    '''
+    program : fun
+    '''
+    p[0]=p[1]
 
 def p_funcion_args(p):
     '''
@@ -539,8 +550,12 @@ def p_expresion_valor(p):
     p[0]=p[1]
 
 def p_error(p):
-    print "Error sintactico en el archivo de entrada!"
+    print ("Usted tiene un error de sintaxis en la linea %s." % p.lineno)
+    print(" '%s' " %p.value)
+    raise SyntaxError
+
+parse = yacc.yacc()
 
 
-parse = yacc.yacc(debug=1)
+
 

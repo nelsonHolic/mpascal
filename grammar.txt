@@ -10,7 +10,7 @@ Reglas P:
 program : program fun | fun
 ;
 
-fun : FUN funname  ‘(‘ parameters ‘)’ locals  BEGIN  statement END
+fun : FUN funname  ‘(‘ parameters ‘)’ locals  BEGIN  statements END
 | FUN funname’(‘’)’ locals BEGIN statements END
 ;
 
