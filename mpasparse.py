@@ -4,49 +4,11 @@ __author__ = 'noescobar,rass,anagui'
 
 import ply.yacc as yacc
 
-from mpaslex import tokens
-from mpaslex import lexer
+from mpaslex import *
 import sys
 from mpasast import *
 
-# class Node():
-#
-#     def __init__(self,name ,children = None, leaf = None):
-#         self.name = name
-#         if not children:
-#             self.children = []
-#         else:
-#             self.children = children
-#         self.leaf = leaf
-#
-#     def append(self, child):
-#         self.children.append(child)
-#     def __str__(self):
-#         return self.name
-#
-#
-# # olarte or may be Pao
-# def dump_tree(n, indent = ''):
-#
-#     if not hasattr(n, 'datatype'):
-#         datatype = ''
-#     else:
-#         datatype = n.datatype
-#
-#     if not n.leaf:
-#         print ('%s%s  %s' % (indent, n.name, datatype))
-#     else:
-#         print ('%s%s (%s)  %s' % (indent, n.name, n.leaf, datatype))
-#
-#     indent = indent.replace('-', ' ')
-#     indent = indent.replace('+', ' ')
-#
-#     for i in range(len(n.children)):
-#         c = n.children[i]
-#         if i == len(n.children)-1:
-#             dump_tree(c, indent + '  +--')
-#         else:
-#             dump_tree(c, indent + '  |--')
+
 
 
 precedence = (
@@ -100,7 +62,7 @@ def p_funname(p):
     '''
     funname :  ID
     '''
-    p[0] = Variable(ID=p[1],valor=None)
+    p[0] = p[1]#Variable(ID=p[1],valor=None)
     #p[0]=p[1]
 
 def p_funcion(p):
@@ -141,7 +103,7 @@ def p_statement_IF_ELSE(p):
     '''
     statement : IF logica THEN statements ELSE statements
     '''
-    p[0]=IfelseStatement(logica=p[2],then_b=p[4],else_b=p[6])
+    p[0]=IfelseStatement(condition = p[2],then_b=p[4],else_b=p[6])
     #p[0] = Node(name = 'IFELSE',children = [p[2], p[4]])
     #p[0] = p[1:]
 
@@ -149,7 +111,7 @@ def p_statement_IF(p):
     '''
     statement : IF logica THEN statements %prec IFRule
     '''
-    p[0] = IfStatement(logica=p[2],then_b=p[4])
+    p[0] = IfStatement(condition = p[2],then_b=p[4])
     #p[0] = Node(name = 'IF',children = [p[2], p[4]])
     #p[0] = p[1:]
 
@@ -392,14 +354,14 @@ def p_defvar_id(p):
     '''
     defvar :  ID ':'  tipo
     '''
-    p[0]= Defvar(ID = p[0], tipo = p[2], value = None, valor=None)
+    p[0]= Defvar(ID = p[1], tipo = p[3], value = None, valor=None)
     #p[0]= Node(name = 'defvar',children = [ p[3]],leaf=p[1])
 
 def p_defvar_vect(p):
     '''
     defvar : ID ':' tipo '[' valor ']'
     '''
-    p[0] = Defvar(ID = p[0], tipo= p[2], valor = p[5], value = None)
+    p[0] = Defvar(ID = p[1], tipo= p[3], valor = p[5], value = None)
     #p[0] = Node(name = 'defvar',children = [ p[3], p[5]],leaf=p[1])
 
 def p_tipo_INT(p):
@@ -561,11 +523,13 @@ def p_expresion_valor(p):
     p[0]= p[1]
     #p[0]=p[1]
 
-def p_error(p):
+boolError = False
 
-    print ("Usted tiene un error de sintaxis en la linea %s." % p.lineno)
-    print(" '%s' " %p.value)
-    raise SyntaxError
+def p_error(p):
+    global globalErrorLex
+    if p and not globalErrorLex['error']:
+        print (bcolors.FAIL+"Error de sintaxis:\n\tUsted tiene un error en la linea %s." % p.lineno+bcolors.ENDC)
+        print(bcolors.FAIL+"\tAntes del simbolo '%s' " %p.value+bcolors.ENDC)
 
 parse = yacc.yacc()
 
@@ -580,4 +544,9 @@ if __name__ == '__main__':
         sys.stdout.write("ha habido un error en la lectura del archivo. Leyendo en entrada estandar:\n")
         data = sys.stdin.read()
     dibujito = parse.parse(data,debug = 0)
-    dibujito.pprint()
+    if dibujito:
+        outFile = open('salida.txt','w')
+        #dibujito.pprint(outFile)
+        dibujito.pprint2(outFile)
+        outFile.close()
+

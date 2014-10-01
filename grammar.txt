@@ -28,7 +28,7 @@ locals : locals  defvar ';'
 | defvar ‘;’
 ;
 
-statement : WHILE logica  DO BEGIN statements END
+statement : WHILE logica  DO statements
 | IF logica THEN statements ELSE statements
 | IF logica THEN statements
 | SKIP
@@ -100,7 +100,7 @@ relacion : expression comparador expression
 ;
 
 logica : logica explog relacion
-| '(' logica explog ')' relacion
+| '(' logica  ')' explog  relacion
 |relacion
 ;
 

@@ -43,7 +43,7 @@ n:int;
 begin
 print("Entre n: ");
 read(n);
-i := 0;
+i := 1;
 while i<n do
 begin
 read(v[i]);
@@ -53,7 +53,7 @@ quicksort(0, n-1, v);
 i := 0;
 while i<n-1 do
 begin
-write(v[i]); print(" ");
+write(v[i]); print("");
 if 0 < v[i] - v[i+1] then
 begin
 print("Quicksort falló "); write(i); print("\n") ; return(0)
@@ -68,6 +68,7 @@ end
 fun pruExpression()
     d: int;
     begin
+        a:= 32;
         if ((2<(3+4)) and not (45 > 54)) then
         skip;
         d := (23+132) - (23*(df+12))
