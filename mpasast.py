@@ -57,8 +57,8 @@ class AST(object):
     #el el hijo o nodoHijo del arbol
     def representacion(self, stringBefore = None):
         stringReturn = ""
-        if stringBefore:
-            stringReturn = "\n"+stringBefore+self.__class__.__name__+""
+        if stringBefore :
+            stringReturn = "\n"+stringBefore+self.__class__.__name__
             for atributo in self._fields:
                 nodoHijo = self.__getattribute__(atributo)
                 if nodoHijo:
