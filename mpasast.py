@@ -47,7 +47,7 @@ class AST(object):
 
     def pprint2(self,archivo= None):
             salida = ''
-            salida += "\n%s" % (self.representacion(stringBefore= " "))
+            salida += "\n%s" % (self.representacion(stringBefore= ""))
             if type(archivo) == file:
                 archivo.write(salida)
             else:
@@ -57,22 +57,39 @@ class AST(object):
     #el el hijo o nodoHijo del arbol
     def representacion(self, stringBefore = None):
         stringReturn = ""
-        if stringBefore :
+        numeroDeHijos = 0
+        if stringBefore or type(stringBefore) == str:
             stringReturn = "\n"+stringBefore+self.__class__.__name__
+            pos = len(stringReturn.split("\n"))
+            stringBefore = (" " *len(stringBefore))
             for atributo in self._fields:
                 nodoHijo = self.__getattribute__(atributo)
                 if nodoHijo:
                     if isinstance(nodoHijo,AST):
-                        stringReturn += nodoHijo.representacion(stringBefore+(" "*4))
+                        numeroDeHijos += 1
+                        stringReturn += nodoHijo.representacion(stringBefore+(" "*4)+"+"+("-"*4))
                     elif type(nodoHijo) == list:
                         for hijo in nodoHijo:
                             if hijo:
+                                numeroDeHijos += 1
                                 if isinstance(hijo,AST):
-                                    stringReturn += hijo.representacion(stringBefore+(" "*4))
+                                    stringReturn += hijo.representacion(stringBefore+(" "*4)+"+"+("-"*4))
                                 else:
-                                    stringReturn += "\n"+stringBefore+(" "*4)+atributo+" : "+str(nodoHijo)
+                                    stringReturn += "\n"+stringBefore+(" "*4)+"+"+("-"*4)+atributo+" : "+str(nodoHijo)
                     else:
-                        stringReturn += "\n"+stringBefore+(" "*4)+atributo+" : "+str(nodoHijo)
+                        numeroDeHijos += 1
+                        stringReturn += "\n"+stringBefore+(" "*4)+"+"+("-"*4)+atributo+" : "+str(nodoHijo)
+            vecStringReturn = stringReturn.split("\n")
+            while pos < len(vecStringReturn) and numeroDeHijos > 0:
+                location = vecStringReturn[pos].find("+")
+                auxcadena = vecStringReturn[pos]
+                if location != len(stringBefore)+4:
+                    auxcadena = auxcadena[:(len(stringBefore)+4)]+"|"+auxcadena[(len(stringBefore)+3):]
+                else:
+                    numeroDeHijos -= 1
+                vecStringReturn[pos] = auxcadena
+                pos += 1
+            stringReturn = "\n".join(vecStringReturn)
         else:
             stringReturn = self.__class__.__name__
         return  stringReturn
@@ -80,14 +97,6 @@ class AST(object):
 
 
     def __repr__(self, stringBefore = None):
-        # stringReturn = ""
-        # if stringBefore:
-        #     stringReturn = stringBefore+self.__class__.__name__+" :"
-        #     for atributos in self._fields:
-        #         nodoHijo = self.__getattribute__(atributos)
-        #         if isinstance(nodoHijo,AST):
-        #
-        # else:
         return self.__class__.__name__
 
 def validate_fields(**fields):

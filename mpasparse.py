@@ -26,7 +26,6 @@ def p_program_funciones(p) :
     '''
     p[1].append(p[2])
     p[0]=p[1]
-    #p[0] = Node(name="program", children= [p[1],p[2]])
 
 
 def p_program(p) :
@@ -34,15 +33,12 @@ def p_program(p) :
     program : fun
     '''
     p[0]= Program(funlist=[p[1]])
-    #p[0] = Node(name = 'funcion',children = [p[1]])
-    #p[0]=p[1]
 
 def p_funcion_args(p):
     '''
     fun : FUN funname '(' parameters ')' locals BEGIN statements END
     '''
     p[0]=FuncPrototype(ID=p[2],parameters=p[4], locals=p[6],statements=p[8])
-    #p[0] = Node(name = 'funcion',children = [p[4], p[6], p[8]],leaf=p[2])
 
 def p_funcion_arg_sinLocals(p):
     '''
@@ -62,8 +58,7 @@ def p_funname(p):
     '''
     funname :  ID
     '''
-    p[0] = p[1]#Variable(ID=p[1],valor=None)
-    #p[0]=p[1]
+    p[0] = p[1]
 
 def p_funcion(p):
     '''
@@ -486,7 +481,7 @@ def p_expression_funargs(p):
     '''
     expression : funname '(' args ')'
     '''
-    p[0] = FunCall(ID = p[1], args = p[2])
+    p[0] = FunCall(ID = p[1], args = p[3])
     #p[0] = Node(name = 'Funcion',children = [p[3]], leaf=p[1])
     #p[0]=p[1:]
 
