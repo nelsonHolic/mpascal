@@ -78,7 +78,8 @@ def p_statements_statement_semicolon_error(p):
     '''
     statements : statements error  statement
     '''
-    print(bcolors.FAIL+"\tNo se a encontrado ningun ';', antes del "+p[2].type+"  "+p[2].value+bcolors.ENDC)
+    if not globalErrorLex['error']:
+        print(bcolors.FAIL+"\tNo se a encontrado ningun ';', antes del "+p[2].type+"  "+p[2].value+bcolors.ENDC)
 
 def p_statements_statement(p):
     '''
