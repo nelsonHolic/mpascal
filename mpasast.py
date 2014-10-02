@@ -56,48 +56,50 @@ class AST(object):
     #este es elmetodo encargado de mostrar como esta contruido el arbol permitiendo crear un string segun como este conformado
     #el el hijo o nodoHijo del arbol
     def representacion(self, stringBefore = None):
-        stringReturn = ""
-        numeroDeHijos = 0
-        if stringBefore or type(stringBefore) == str:
-            stringReturn = "\n"+stringBefore+self.__class__.__name__
-            pos = len(stringReturn.split("\n"))
-            stringBefore = (" " *len(stringBefore))
-            for atributo in self._fields:
-                nodoHijo = self.__getattribute__(atributo)
-                if nodoHijo:
-                    if isinstance(nodoHijo,AST):
-                        numeroDeHijos += 1
-                        stringReturn += nodoHijo.representacion(stringBefore+(" "*4)+"+"+("-"*4))
-                    elif type(nodoHijo) == list:
-                        for hijo in nodoHijo:
-                            if hijo:
-                                numeroDeHijos += 1
-                                if isinstance(hijo,AST):
-                                    stringReturn += hijo.representacion(stringBefore+(" "*4)+"+"+("-"*4))
-                                else:
-                                    stringReturn += "\n"+stringBefore+(" "*4)+"+"+("-"*4)+atributo+" : "+str(nodoHijo)
+            stringReturn = ""
+            numeroDeHijos = 0
+            if stringBefore or type(stringBefore) == str:
+                stringReturn = "\n"+stringBefore+self.__class__.__name__
+                pos = len(stringReturn.split("\n"))
+                stringBefore = (" " *len(stringBefore))
+                for atributo in self._fields:
+                    nodoHijo = self.__getattribute__(atributo)
+                    if nodoHijo:
+                        if isinstance(nodoHijo,AST):
+                            numeroDeHijos += 1
+                            stringReturn += nodoHijo.representacion(stringBefore+" "+"+"+("-"*4))
+                        elif type(nodoHijo) == list:
+                            for hijo in nodoHijo:
+                                if hijo:
+                                    numeroDeHijos += 1
+                                    if isinstance(hijo,AST):
+                                        stringReturn += hijo.representacion(stringBefore+" "+"+"+("-"*4))
+                                    else:
+                                        stringReturn += "\n"+stringBefore+" "+"+"+("-"*4)+atributo+" : "+str(nodoHijo)
+                        else:
+                            numeroDeHijos += 1
+                            stringReturn += "\n"+stringBefore+" "+"+"+("-"*4)+atributo+" : "+str(nodoHijo)
+                vecStringReturn = stringReturn.split("\n")
+                while pos < len(vecStringReturn) and numeroDeHijos > 0:
+                    location = vecStringReturn[pos].find("+")
+                    auxcadena = vecStringReturn[pos]
+                    if location != len(stringBefore)+1:
+                        auxcadena = auxcadena[:(len(stringBefore)+1)]+"|"+auxcadena[(len(stringBefore)):]
                     else:
-                        numeroDeHijos += 1
-                        stringReturn += "\n"+stringBefore+(" "*4)+"+"+("-"*4)+atributo+" : "+str(nodoHijo)
-            vecStringReturn = stringReturn.split("\n")
-            while pos < len(vecStringReturn) and numeroDeHijos > 0:
-                location = vecStringReturn[pos].find("+")
-                auxcadena = vecStringReturn[pos]
-                if location != len(stringBefore)+4:
-                    auxcadena = auxcadena[:(len(stringBefore)+4)]+"|"+auxcadena[(len(stringBefore)+3):]
-                else:
-                    numeroDeHijos -= 1
-                vecStringReturn[pos] = auxcadena
-                pos += 1
-            stringReturn = "\n".join(vecStringReturn)
-        else:
-            stringReturn = self.__class__.__name__
-        return  stringReturn
+                        numeroDeHijos -= 1
+                    vecStringReturn[pos] = auxcadena
+                    pos += 1
+                stringReturn = "\n".join(vecStringReturn)
+            else:
+                stringReturn = self.__class__.__name__
+            return  stringReturn
 
 
 
     def __repr__(self, stringBefore = None):
         return self.__class__.__name__
+
+
 
 def validate_fields(**fields):
     def validator(cls):
