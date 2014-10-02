@@ -184,7 +184,7 @@ class Statements(AST):
     def append(self,statement):
         self.statements.append(statement)
 
-class FuncPrototype(AST):
+class Funcion(AST):
     _fields = ['ID', 'parameters', 'locals','statements']
 
 
