@@ -47,7 +47,7 @@ class AST(object):
 
     def pprint2(self,archivo= None):
             salida = ''
-            salida += "\n%s" % (self.representacion(stringBefore= ""))
+            salida += "%s" % (self.representacion(stringBefore= ""))
             if type(archivo) == file:
                 archivo.write(salida)
             else:
@@ -59,7 +59,10 @@ class AST(object):
             stringReturn = ""
             numeroDeHijos = 0
             if stringBefore or type(stringBefore) == str:
-                stringReturn = "\n"+stringBefore+self.__class__.__name__
+                if(stringBefore== ""):
+                    stringReturn = stringBefore+self.__class__.__name__
+                else:
+                    stringReturn = "\n"+stringBefore+self.__class__.__name__
                 pos = len(stringReturn.split("\n"))
                 stringBefore = (" " *len(stringBefore))
                 for atributo in self._fields:

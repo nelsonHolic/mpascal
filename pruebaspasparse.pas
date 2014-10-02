@@ -1,4 +1,4 @@
-fun quicksort(l:int, r:int, a:int[8192])
+/*fun quicksort(l:int, r:int, a:int[8192])
 i:int;
 j:int;
 x:int;
@@ -64,12 +64,13 @@ end;
 write(v[i]);
 print("Éxito\n")
 end
+*/
 
 fun pruExpression()
     d: int;
     begin
         a:= 32;
         if ((2<(3+4)) and not (45 > 54)) then
-        skip;
+        skip
         d := (23+132) - (23*(df+12))
     end

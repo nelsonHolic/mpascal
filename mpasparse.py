@@ -74,6 +74,12 @@ def p_statements_statement_semicolon(p):
     p[1].append(p[3])
     p[0] = p[1]
 
+def p_statements_statement_semicolon_error(p):
+    '''
+    statements : statements error  statement
+    '''
+    print(bcolors.FAIL+"\tNo se a encontrado ningun ';', antes del "+p[2].type+"  "+p[2].value+bcolors.ENDC)
+
 def p_statements_statement(p):
     '''
     statements : statement
@@ -414,10 +420,11 @@ boolError = False
 def p_error(p):
     global globalErrorLex
     if p and not globalErrorLex['error']:
-        print (bcolors.FAIL+"Error de sintaxis:\n\tUsted tiene un error en la linea %s." % (p.lineno-1)+bcolors.ENDC)
-        print(bcolors.FAIL+"\tAntes del simbolo '%s' " %p.value+bcolors.ENDC)
+        print (bcolors.FAIL+"Error de sintaxis en la linea %s :" % (p.lineno-1)+bcolors.ENDC)
+        #print(bcolors.FAIL+"\tAntes del simbolo '%s' " %p.value+bcolors.ENDC)
 
 parse = yacc.yacc()
+
 
 
 if __name__ == '__main__':
@@ -429,10 +436,10 @@ if __name__ == '__main__':
     except IndexError:
         sys.stdout.write("ha habido un error en la lectura del archivo. Leyendo en entrada estandar:\n")
         data = sys.stdin.read()
-    dibujito = parse.parse(data,debug = 0)
-    if dibujito:
+    ast = parse.parse(data,debug = 0)
+    if ast:
         outFile = open('RepresentacionAST.txt','w')
         #dibujito.pprint(outFile)
-        dibujito.pprint2(outFile) # crea el archivo de impresion RepresentacionAST.txt
+        ast.pprint2(outFile) # crea el archivo de impresion RepresentacionAST.txt
         outFile.close()
 
