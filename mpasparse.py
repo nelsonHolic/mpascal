@@ -8,7 +8,11 @@ from mpaslex import *
 import sys
 from mpasast import *
 
-print "La representacion de el arbol de sintaxis abstracto de el programa analizado se muestra en un archivo nuevo creado llamado RepresentacionAST.txt en la carpeta donde se encuentre mpasparse.py"
+print '''
+      La representacion de el arbol de sintaxis abstracto de el programa analizado
+      se muestra en un archivo nuevo creado llamado RepresentacionAST.txt
+      ubicado en la carpeta donde se encuentre mpasparse.py
+      '''
 
 
 precedence = (
@@ -378,7 +382,7 @@ def p_expression_funargs(p):
     '''
     expression : funname '(' args ')'
     '''
-    p[0] = FunCall(ID = p[1], args = p[2])
+    p[0] = FunCall(ID = p[1], args = p[3])
 
 def p_expression_fun(p):
     '''
