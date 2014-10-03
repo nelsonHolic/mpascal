@@ -14,7 +14,7 @@ print '''
       ubicado en la carpeta donde se encuentre mpasparse.py
       '''
 
-
+b=0
 precedence = (
     ('right','ELSE'),
     ('left', 'OR','NOT', 'AND'),
@@ -36,6 +36,13 @@ def p_program(p) :
     program : fun
     '''
     p[0]= Program(funlist=[p[1]])
+
+def p_statements_error(p) :
+    '''
+    statements : error'''
+    if not globalErrorLex['error']:
+        print(bcolors.FAIL+"\tNo se ha encontrado ninguna instruccion en el bloque de instrucciones antes de :"+p[1].type+bcolors.ENDC)
+        b=1
 
 def p_funcion_args(p):
     '''
@@ -79,7 +86,8 @@ def p_statements_statement_semicolon_error(p):
     statements : statements error  statement
     '''
     if not globalErrorLex['error']:
-        print(bcolors.FAIL+"\tNo se a encontrado ningun ';', antes del "+p[2].type+"  "+p[2].value+bcolors.ENDC)
+        print(bcolors.FAIL+"\tNo se ha encontrado ningun ';', antes del "+p[2].type+"  "+p[2].value+bcolors.ENDC)
+        b=1
 
 def p_statements_statement(p):
     '''
@@ -361,6 +369,15 @@ def p_expression_parent(p):
     '''
     p[0] = p[2]
 
+def p_expression_parent_error_right(p):
+    '''
+    expression : '(' expression error
+    '''
+    if not globalErrorLex['error']:
+        print(bcolors.FAIL+"\tParentesis desbalanceado"+bcolors.ENDC)
+        b=1
+
+
 def p_expression_negative(p):
     '''
     expression : '-' expression
@@ -421,12 +438,10 @@ boolError = False
 def p_error(p):
     global globalErrorLex
     if p and not globalErrorLex['error']:
-        print (bcolors.FAIL+"Error de sintaxis en la linea %s :" % (p.lineno-1)+bcolors.ENDC)
-        #print(bcolors.FAIL+"\tAntes del simbolo '%s' " %p.value+bcolors.ENDC)
+        print (bcolors.FAIL+"Error de sintaxis en la linea %s  :" % p.lineno+bcolors.ENDC)
+        b=1
 
 parse = yacc.yacc()
-
-
 
 if __name__ == '__main__':
     try:
@@ -438,7 +453,7 @@ if __name__ == '__main__':
         sys.stdout.write("ha habido un error en la lectura del archivo. Leyendo en entrada estandar:\n")
         data = sys.stdin.read()
     ast = parse.parse(data,debug = 0)
-    if ast:
+    if ast  and (not b) and (not globalErrorLex['error']) :
         outFile = open('RepresentacionAST.txt','w')
         #dibujito.pprint(outFile)
         ast.pprint2(outFile) # crea el archivo de impresion RepresentacionAST.txt
