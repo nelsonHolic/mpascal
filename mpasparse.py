@@ -70,6 +70,7 @@ def p_funcion_BEGIN_Error(p):
     '''
      fun : FUN funname  '(' ')' locals  BEGIN  statements error
     '''
+
     global globalErrorSintactico
     if not globalErrorLex['error']:
         if(p[8]).type == 'END':
@@ -465,9 +466,15 @@ def p_expresion_valor(p):
 def p_error(p):
     global globalErrorLex
     global globalErrorSintactico
-    if p and (not globalErrorSintactico['error']) and (not globalErrorLex['error']) :
-        print (bcolors.FAIL+"Error de sintaxis en la linea %s  :" % p.lineno+bcolors.ENDC)
-        globalErrorSintactico['error'] = True
+    if p:
+        if (not globalErrorSintactico['error']):
+            print (bcolors.FAIL+"Error de sintaxis en la linea %s  :" % p.lineno+bcolors.ENDC)
+            globalErrorSintactico['error'] = True
+    else:
+        if (not globalErrorSintactico['error']):
+            print (bcolors.FAIL+"Error de sintaxis en la linea final:")
+            print ('\tNo se ha encontrado ningun end'+bcolors.ENDC)
+            globalErrorSintactico['error'] = True
 
 parse = yacc.yacc()
 

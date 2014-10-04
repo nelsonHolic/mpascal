@@ -64,12 +64,3 @@ i:=i+1
 end;
 write(v[i]);
 print("Éxito\n")
-end
-
-
-fun pruExpression()
-    d: int;
-    begin
-    while 3<5 do
-    d:=(3+x);
-    end
