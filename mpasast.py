@@ -51,6 +51,7 @@ class AST(object):
             if type(archivo) == file:
                 archivo.write(salida)
             else:
+                '<div></div>'
                 print salida
 
     #este es elmetodo encargado de mostrar como esta contruido el arbol permitiendo crear un string segun como este conformado
@@ -338,7 +339,7 @@ class NodeVisitor(object):
             return visitor(node)
         else:
             return None
-    
+
     def generic_visit(self,node):
         '''
         Método ejecutado si no se encuentra médodo aplicable visit_.
@@ -411,3 +412,4 @@ def flatten(top):
     d = Flattener()
     d.visit(top)
     return d.nodes
+

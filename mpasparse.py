@@ -8,13 +8,10 @@ from mpaslex import *
 import sys
 from mpasast import *
 
-print '''
-      La representacion de el arbol de sintaxis abstracto de el programa analizado
-      se muestra en un archivo nuevo creado llamado RepresentacionAST.txt
-      ubicado en la carpeta donde se encuentre mpasparse.py
-      '''
 
-b=0
+globalErrorSintactico = {'error' : False}
+
+
 precedence = (
     ('right','ELSE'),
     ('left', 'OR','NOT', 'AND'),
@@ -37,12 +34,7 @@ def p_program(p) :
     '''
     p[0]= Program(funlist=[p[1]])
 
-def p_statements_error(p) :
-    '''
-    statements : error'''
-    if not globalErrorLex['error']:
-        print(bcolors.FAIL+"\tNo se ha encontrado ninguna instruccion en el bloque de instrucciones antes de :"+p[1].type+bcolors.ENDC)
-        b=1
+
 
 def p_funcion_args(p):
     '''
@@ -74,6 +66,20 @@ def p_funcion(p):
     '''
     p[0]=Funcion(ID=p[2],parameters=None, locals=p[5],statements=p[7])
 
+def p_funcion_BEGIN_Error(p):
+    '''
+     fun : FUN funname  '(' ')' locals  BEGIN  statements error
+    '''
+    global globalErrorSintactico
+    if not globalErrorLex['error']:
+        if(p[8]).type == 'END':
+            print(bcolors.FAIL+"\t ';' redundante, antes de "+p[8].type+"  "+p[8].value+bcolors.ENDC)
+            globalErrorSintactico['error']=True
+        else:
+            print(bcolors.FAIL+"\tNo se ha encontrado ningun END, antes de "+p[8].type+"  "+p[8].value+bcolors.ENDC)
+            globalErrorSintactico['error']=True
+    raise SyntaxError
+
 def p_statements_statement_semicolon(p):
     '''
     statements : statements ';'  statement
@@ -81,13 +87,17 @@ def p_statements_statement_semicolon(p):
     p[1].append(p[3])
     p[0] = p[1]
 
+
+
 def p_statements_statement_semicolon_error(p):
     '''
     statements : statements error  statement
     '''
+    global globalErrorSintactico
     if not globalErrorLex['error']:
         print(bcolors.FAIL+"\tNo se ha encontrado ningun ';', antes del "+p[2].type+"  "+p[2].value+bcolors.ENDC)
-        b=1
+        globalErrorSintactico['error']=True
+    raise SyntaxError
 
 def p_statements_statement(p):
     '''
@@ -233,7 +243,8 @@ def p_logica_complex_error2(p):
     '''
     if not globalErrorLex['error']:
         print(bcolors.FAIL+"\tParentesis desbalanceado."+bcolors.ENDC)
-        b=1
+        globalErrorSintactico['error']=True
+    raise SyntaxError
 
 def p_logica_relacion(p):
     '''
@@ -349,11 +360,11 @@ def p_assign_val(p):
 
 def p_assign_val_error(p):
     '''
-    assign :  ID ':' expression
+    assign :  ID ':' error
     '''
     if not globalErrorLex['error']:
         print(bcolors.FAIL+"\tSimbolo erroneo para la asignacion."+p[2]+bcolors.ENDC)
-        b=1
+    raise SyntaxError
 
 def p_assign_vec(p):
     '''
@@ -394,13 +405,6 @@ def p_expression_parent(p):
     '''
     p[0] = p[2]
 
-def p_expression_parent_error_right(p):
-    '''
-    expression : '(' expression error
-    '''
-    if not globalErrorLex['error']:
-        print(bcolors.FAIL+"\tParentesis desbalanceado"+bcolors.ENDC)
-        b=1
 
 
 def p_expression_negative(p):
@@ -458,13 +462,12 @@ def p_expresion_valor(p):
     '''
     p[0]= p[1]
 
-boolError = False
-
 def p_error(p):
     global globalErrorLex
-    if p and not globalErrorLex['error']:
+    global globalErrorSintactico
+    if p and (not globalErrorSintactico['error']) and (not globalErrorLex['error']) :
         print (bcolors.FAIL+"Error de sintaxis en la linea %s  :" % p.lineno+bcolors.ENDC)
-        b=1
+        globalErrorSintactico['error'] = True
 
 parse = yacc.yacc()
 
@@ -478,7 +481,12 @@ if __name__ == '__main__':
         sys.stdout.write("ha habido un error en la lectura del archivo. Leyendo en entrada estandar:\n")
         data = sys.stdin.read()
     ast = parse.parse(data,debug = 0)
-    if ast  and (not b) and (not globalErrorLex['error']) :
+    if ast  and ((not globalErrorSintactico['error']) or (not globalErrorLex['error'])) :
+        print ('''
+              La representacion de el arbol de sintaxis abstracto de el programa analizado
+              se muestra en un archivo nuevo creado llamado RepresentacionAST.txt
+              ubicado en la carpeta donde se encuentre mpasparse.py
+              ''')
         outFile = open('RepresentacionAST.txt','w')
         #dibujito.pprint(outFile)
         ast.pprint2(outFile) # crea el archivo de impresion RepresentacionAST.txt
