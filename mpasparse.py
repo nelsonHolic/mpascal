@@ -42,6 +42,18 @@ def p_funcion_args(p):
     '''
     p[0]=Funcion(ID=p[2],parameters=p[4], locals=p[6],statements=p[8])
 
+
+def p_funcion_args_BEGIN_Error(p):
+    '''
+    fun : FUN funname '(' parameters ')' locals error statements END
+    '''
+    global globalErrorSintactico
+    if not globalErrorLex['error'] and not globalErrorSintactico['error']:
+            print(bcolors.FAIL+"\t No se ah encontrado ningun begin antes de "+p[7].type+"  "+p[7].value+bcolors.ENDC)
+            globalErrorSintactico['error']=True
+
+
+
 def p_funcion_arg_sinLocals(p):
     '''
     fun : FUN funname '(' parameters ')' BEGIN statements END
@@ -95,7 +107,7 @@ def p_statements_statement_semicolon_error(p):
     statements : statements error  statement
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error']:
+    if not globalErrorLex['error'] and not globalErrorSintactico['error'] :
         print(bcolors.FAIL+"\tNo se ha encontrado ningun ';', antes del "+p[2].type+"  "+p[2].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
     raise SyntaxError
@@ -516,16 +528,21 @@ def p_expresion_valor(p):
     '''
     p[0]= p[1]
 
+boolError= False
+
 def p_error(p):
     global globalErrorLex
     global globalErrorSintactico
+    global boolError
     if p:
         if (not globalErrorSintactico['error'] and not globalErrorLex['error']):
             print (bcolors.FAIL+"Error de sintaxis en la linea %s  :" % p.lineno+bcolors.ENDC)
+            boolError = True
     else:
-        if (not globalErrorLex['error'] and not globalErrorLex['error']):
+        if (not globalErrorLex['error'] and not globalErrorSintactico['error']):
             print (bcolors.FAIL+"Error de sintaxis en la linea final:")
             print ('\tNo se ha encontrado ningun end'+bcolors.ENDC)
+            boolError = True
 
 parse = yacc.yacc()
 
@@ -539,7 +556,7 @@ if __name__ == '__main__':
         sys.stdout.write("ha habido un error en la lectura del archivo. Leyendo en entrada estandar:\n")
         data = sys.stdin.read()
     ast = parse.parse(data,debug = 0)
-    if ast  and ((not globalErrorSintactico['error']) or (not globalErrorLex['error'])) :
+    if ast and not boolError  and ((not globalErrorSintactico['error']) and (not globalErrorLex['error'])) :
         print ('''
               La representacion de el arbol de sintaxis abstracto de el programa analizado
               se muestra en un archivo nuevo creado llamado RepresentacionAST.txt
