@@ -467,11 +467,11 @@ def p_error(p):
     global globalErrorLex
     global globalErrorSintactico
     if p:
-        if (not globalErrorSintactico['error']):
+        if (not globalErrorSintactico['error'] and not globalErrorLex['error']):
             print (bcolors.FAIL+"Error de sintaxis en la linea %s  :" % p.lineno+bcolors.ENDC)
             globalErrorSintactico['error'] = True
     else:
-        if (not globalErrorSintactico['error']):
+        if (not globalErrorLex['error'] and not globalErrorLex['error']):
             print (bcolors.FAIL+"Error de sintaxis en la linea final:")
             print ('\tNo se ha encontrado ningun end'+bcolors.ENDC)
             globalErrorSintactico['error'] = True
