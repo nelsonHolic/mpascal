@@ -70,9 +70,8 @@ def p_funcion_BEGIN_Error(p):
     '''
      fun : FUN funname  '(' ')' locals  BEGIN  statements error
     '''
-
     global globalErrorSintactico
-    if not globalErrorLex['error']:
+    if not globalErrorLex['error'] and not globalErrorSintactico['error']:
         if(p[8]).type == 'END':
             print(bcolors.FAIL+"\t ';' redundante, antes de "+p[8].type+"  "+p[8].value+bcolors.ENDC)
             globalErrorSintactico['error']=True
@@ -80,6 +79,7 @@ def p_funcion_BEGIN_Error(p):
             print(bcolors.FAIL+"\tNo se ha encontrado ningun END, antes de "+p[8].type+"  "+p[8].value+bcolors.ENDC)
             globalErrorSintactico['error']=True
     raise SyntaxError
+
 
 def p_statements_statement_semicolon(p):
     '''
@@ -148,6 +148,16 @@ def p_statement_PRINT(p):
     '''
     p[0] = printStatement(STRING=p[3])
 
+def p_statement_PRINT_RPARENT_Error(p):
+    '''
+    statement : PRINT '(' STRING error
+    '''
+    global globalErrorSintactico
+    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+        print(bcolors.FAIL+"\t Parentesis desvalanceado, antes del "+p[4].type+bcolors.ENDC)
+        globalErrorSintactico['error']=True
+    raise SyntaxError
+
 def p_statement_WRITE(p):
     '''
     statement : WRITE '(' expression ')'
@@ -191,6 +201,18 @@ def p_locals_defvarrecur(p):
     p[1].append(p[2])
     p[0]= p[1]
 
+
+def p_locals_defvarrecur_error(p):
+    '''
+    locals : locals  defvar error
+    '''
+    global globalErrorSintactico
+    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+        print(bcolors.FAIL+"\t No se a encontrado ningun ';', antes del "+p[3].type+" "+p[3].value+bcolors.ENDC)
+        globalErrorSintactico['error']=True
+    raise SyntaxError
+
+
 def p_locals_funrecur(p):
     '''
     locals : locals fun ';'
@@ -198,17 +220,48 @@ def p_locals_funrecur(p):
     p[1].append(p[2])
     p[0]=p[1]
 
+
+def p_locals_funrecur_error(p):
+    '''
+    locals : locals fun error
+    '''
+    global globalErrorSintactico
+    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+        print(bcolors.FAIL+"\t No se a encontrado ningun ';', antes del "+p[2].type+" "+p[2].value+bcolors.ENDC)
+        globalErrorSintactico['error']=True
+    raise SyntaxError
+
 def p_locals_fun(p):
     '''
     locals : fun ';'
     '''
     p[0]=Locals(localsList=[p[1]])
 
+def p_locals_fun_eror(p):
+    '''
+    locals : fun error
+    '''
+    global globalErrorSintactico
+    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+        print(bcolors.FAIL+"\t No se a encontrado ningun ';', antes del "+p[2].type+" "+p[2].value+bcolors.ENDC)
+        globalErrorSintactico['error']=True
+    raise SyntaxError
+
 def p_locals_defvar(p):
     '''
     locals : defvar ';'
     '''
     p[0] = Locals(localsList=[p[1]])
+
+def p_locals_defvar_error(p):
+    '''
+    locals : defvar error
+    '''
+    global globalErrorSintactico
+    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+        print(bcolors.FAIL+"\t No se a encontrado ningun ';', antes del "+p[2].type+" "+p[2].value+bcolors.ENDC)
+        globalErrorSintactico['error']=True
+    raise SyntaxError
 
 def p_logica_simple(p):
     '''
@@ -469,12 +522,10 @@ def p_error(p):
     if p:
         if (not globalErrorSintactico['error'] and not globalErrorLex['error']):
             print (bcolors.FAIL+"Error de sintaxis en la linea %s  :" % p.lineno+bcolors.ENDC)
-            globalErrorSintactico['error'] = True
     else:
         if (not globalErrorLex['error'] and not globalErrorLex['error']):
             print (bcolors.FAIL+"Error de sintaxis en la linea final:")
             print ('\tNo se ha encontrado ningun end'+bcolors.ENDC)
-            globalErrorSintactico['error'] = True
 
 parse = yacc.yacc()
 
