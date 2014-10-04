@@ -219,6 +219,22 @@ def p_logica_complex(p):
     '''
     p[0] = p[2]
 
+# def p_logica_complex_error(p):
+#     '''
+#     logica : error logica ')'
+#     '''
+#     if not globalErrorLex['error']:
+#         print(bcolors.FAIL+"\tParentesis desbalanceado."+p[2]+bcolors.ENDC)
+#         b=1
+
+def p_logica_complex_error2(p):
+    '''
+    logica : '(' logica error
+    '''
+    if not globalErrorLex['error']:
+        print(bcolors.FAIL+"\tParentesis desbalanceado."+bcolors.ENDC)
+        b=1
+
 def p_logica_relacion(p):
     '''
     logica : relacion
@@ -329,6 +345,15 @@ def p_assign_val(p):
     assign :  ID ASIGSIM  expression
     '''
     p[0]=AssignStatement(ID=p[1],expression=p[3])
+
+
+def p_assign_val_error(p):
+    '''
+    assign :  ID ':' expression
+    '''
+    if not globalErrorLex['error']:
+        print(bcolors.FAIL+"\tSimbolo erroneo para la asignacion."+p[2]+bcolors.ENDC)
+        b=1
 
 def p_assign_vec(p):
     '''

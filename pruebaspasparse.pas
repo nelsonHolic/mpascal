@@ -70,5 +70,6 @@ end
 fun pruExpression()
     d: int;
     begin
-    d:=(3+x)
+    while 3<5 do
+    d:=(3+x);
     end
