@@ -13,6 +13,7 @@ globalErrorSintactico = {'error' : False}
 
 precedence = (
     ('right','ELSE'),
+    ('right','error'),
     ('left', 'OR','NOT', 'AND'),
     ('left','*','/'),
     ('left','+','-'),
@@ -63,6 +64,18 @@ def p_funcion(p):
     '''
     p[0]=Funcion(ID=p[2],parameters=None, locals=p[5],statements=p[7])
 
+
+# def p_funcion_end_Error(p):
+#     '''
+#      fun : FUN funname  '(' ')' locals  BEGIN END
+#     '''
+#     global globalErrorSintactico
+#     if not globalErrorLex['error'] and not globalErrorSintactico['error']:
+#         print(bcolors.FAIL+"\t bloque de instrucciones vacio "+p[7].type+"  "+p[7].value+bcolors.ENDC)
+#         globalErrorSintactico['error']=True
+#     raise  SyntaxError
+
+
 def p_funcion_end_Error(p):
     '''
      fun : FUN funname  '(' ')' locals  BEGIN  statements error
@@ -75,7 +88,6 @@ def p_funcion_end_Error(p):
         else:
             print(bcolors.FAIL+"\tNo se ha encontrado ningun END, antes de "+p[8].type+"  "+p[8].value+bcolors.ENDC)
             globalErrorSintactico['error']=True
-    raise SyntaxError
 
 def p_funcion_end_wlocals_Error(p):
     '''
@@ -121,6 +133,15 @@ def p_funcion_end_args_wlocals_Error(p):
             globalErrorSintactico['error']=True
     raise SyntaxError
 
+def p_funcion_args_BEGIN_Error(p):
+    '''
+    fun : FUN funname '(' parameters ')' locals error statements END
+    '''
+    global globalErrorSintactico
+    if not globalErrorLex['error'] and not globalErrorSintactico['error']:
+            print(bcolors.FAIL+"\t No se ah encontrado ningun begin antes de "+p[7].type+"  "+p[7].value+bcolors.ENDC)
+            globalErrorSintactico['error']=True
+
 
 def p_statements_statement_semicolon(p):
     '''
@@ -129,16 +150,6 @@ def p_statements_statement_semicolon(p):
     p[1].append(p[3])
     p[0] = p[1]
 
-
-
-def p_statements_statement_lambda(p):
-    '''
-    statements :
-    '''
-    if not globalErrorLex['error'] and not globalErrorSintactico['error']:
-        print(bcolors.FAIL+"\tBloque de instrucciones vacio en una funcion del programa."+bcolors.ENDC)
-        globalErrorSintactico['error']=True
-    raise SyntaxError
 
 
 
@@ -157,6 +168,21 @@ def p_statements_statement(p):
     statements : statement
     '''
     p[0]=Statements(statements=[p[1]])
+
+
+
+
+def p_statements_statement_empty_error(p):
+    '''
+    statements :
+    '''
+    global globalErrorSintactico
+    if not globalErrorLex['error']:
+        print(bcolors.FAIL+"\t bloque de instrucciones vacio en la linea"+bcolors.ENDC)
+        globalErrorSintactico['error']=True
+    raise SyntaxError
+
+
 
 def p_statement_WHILE(p):
     '''
@@ -459,6 +485,17 @@ def p_parameters_multi(p):
     p[1].append(p[3])
     p[0]= p[1]
 
+
+def p_parameters_multi_error(p):
+    '''
+    parameters : parameters error defvar
+    '''
+    global globalErrorSintactico
+    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+        print(bcolors.FAIL+"\t No se a encontrado ninguna ',', antes del "+p[2].type+" "+p[2].value+bcolors.ENDC)
+        globalErrorSintactico['error']=True
+    raise SyntaxError
+
 def p_parameters_unique(p) :
     '''
     parameters : defvar
@@ -468,18 +505,24 @@ def p_parameters_unique(p) :
 
 def p_assign_val(p):
     '''
-    assign :  ID ASIGSIM  expression
+    assign :  ID ASIGSIM expression
     '''
     p[0]=AssignStatement(ID=p[1],expression=p[3])
 
 
 def p_assign_val_error(p):
     '''
-    assign :  ID ':' error
+    assign :  ID error expression
     '''
-    if not globalErrorLex['error']:
-        print(bcolors.FAIL+"\tSimbolo erroneo para la asignacion."+p[2]+bcolors.ENDC)
+    global globalErrorSintactico
+    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+        print(bcolors.FAIL+"\t No se a encontrado ningun ':=', en su lugar se encontro "+p[2].type+bcolors.ENDC)
+        globalErrorSintactico['error']=True
     raise SyntaxError
+
+
+
+
 
 def p_assign_vec(p):
     '''
