@@ -11,6 +11,17 @@ nodos AST pueden ser encontrados al comienzo del archivo.  Usted deberá
 añadir más.
 '''
 
+import sys
+
+class bcolorsAST:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+
+
 # NO MODIFICAR
 class AST(object):
     '''
@@ -70,33 +81,53 @@ class AST(object):
                     nodoHijo = self.__getattribute__(atributo)
                     if nodoHijo:
                         if isinstance(nodoHijo,AST):
-                            numeroDeHijos += 1
-                            stringReturn += nodoHijo.representacion(stringBefore+" "+"+"+("-"*4))
+                            try:
+                                numeroDeHijos += 1
+                                stringReturn += nodoHijo.representacion(stringBefore+" "+"+"+("-"*4))
+                            except Exception,e:
+                                sys.exit(bcolorsAST.WARNING+'arbol muy profundo, no puede escribirse el archivo'+bcolorsAST.ENDC)
                         elif type(nodoHijo) == list:
                             for hijo in nodoHijo:
                                 if hijo:
-                                    numeroDeHijos += 1
                                     if isinstance(hijo,AST):
-                                        stringReturn += hijo.representacion(stringBefore+" "+"+"+("-"*4))
+                                        try:
+                                            numeroDeHijos += 1
+                                            stringReturn += hijo.representacion(stringBefore+" "+"+"+("-"*4))
+                                        except Exception,e:
+                                            sys.exit(bcolorsAST.WARNING+'arbol muy profundo, no puede escribirse el archivo'+bcolorsAST.ENDC)
                                     else:
-                                        stringReturn += "\n"+stringBefore+" "+"+"+("-"*4)+atributo+" : "+str(nodoHijo)
+                                        try:
+                                            numeroDeHijos += 1
+                                            stringReturn += "\n"+stringBefore+" "+"+"+("-"*4)+atributo+" : "+str(nodoHijo)
+                                        except Exception,e:
+                                            sys.exit(bcolorsAST.WARNING+'arbol muy profundo, no puede escribirse el archivo'+bcolorsAST.ENDC)
                         else:
-                            numeroDeHijos += 1
-                            stringReturn += "\n"+stringBefore+" "+"+"+("-"*4)+atributo+" : "+str(nodoHijo)
+                            try:
+                                numeroDeHijos += 1
+                                stringReturn += "\n"+stringBefore+" "+"+"+("-"*4)+atributo+" : "+str(nodoHijo)
+                            except Exception,e:
+                                print('problema en la escritura')
                 vecStringReturn = stringReturn.split("\n")
-                while pos < len(vecStringReturn) and numeroDeHijos > 0:
-                    location = vecStringReturn[pos].find("+")
-                    auxcadena = vecStringReturn[pos]
-                    if location != len(stringBefore)+1:
-                        auxcadena = auxcadena[:(len(stringBefore)+1)]+"|"+auxcadena[(len(stringBefore)):]
-                    else:
-                        numeroDeHijos -= 1
-                    vecStringReturn[pos] = auxcadena
-                    pos += 1
+                if len(vecStringReturn)/6 >= 1000:
+                    pass #print("Profundidad del la rama muy profundo, simplificando el arbol")
+                else:
+                    try:
+                        while pos < len(vecStringReturn) and numeroDeHijos > 0:
+                            location = vecStringReturn[pos].find("+")
+                            auxcadena = vecStringReturn[pos]
+                            if location != len(stringBefore)+1:
+                                auxcadena = auxcadena[:(len(stringBefore)+1)]+"|"+auxcadena[(len(stringBefore)):]
+                            else:
+                                numeroDeHijos -= 1
+                            vecStringReturn[pos] = auxcadena
+                            pos += 1
+                    except Exception,e:
+                        sys.exit(bcolorsAST.WARNING+'arbol muy profundo, no puede escribirse el archivo'+bcolorsAST.ENDC)
                 stringReturn = "\n".join(vecStringReturn)
             else:
                 stringReturn = self.__class__.__name__
             return  stringReturn
+
 
 
 
@@ -273,6 +304,12 @@ class signexpression(AST):
 
 class Expression(AST):
     _fields = ['op', 'left', 'right']
+
+class UnariExpression(AST):
+    _fields = ['op','right']
+
+class CastExpression(AST):
+    _fields = ['tipo','right']
 
 class RelationalOp(AST):
     _fields = ['op', 'left', 'right']
