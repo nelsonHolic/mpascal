@@ -3,7 +3,6 @@
 __authors__ = 'noescobar,rass,anagui'
 
 import ply.yacc as yacc
-
 from mpaslex import *
 import sys
 from mpasast import *
@@ -33,8 +32,6 @@ def p_program(p) :
     program : fun
     '''
     p[0]= Program(funlist=[p[1]])
-
-
 
 def p_funcion_args(p):
     '''
@@ -66,9 +63,53 @@ def p_funcion(p):
     '''
     p[0]=Funcion(ID=p[2],parameters=None, locals=p[5],statements=p[7])
 
-def p_funcion_BEGIN_Error(p):
+def p_funcion_end_Error(p):
     '''
      fun : FUN funname  '(' ')' locals  BEGIN  statements error
+    '''
+    global globalErrorSintactico
+    if not globalErrorLex['error'] and not globalErrorSintactico['error']:
+        if(p[8]).type == 'END':
+            print(bcolors.FAIL+"\t ';' redundante, antes de "+p[8].type+"  "+p[8].value+bcolors.ENDC)
+            globalErrorSintactico['error']=True
+        else:
+            print(bcolors.FAIL+"\tNo se ha encontrado ningun END, antes de "+p[8].type+"  "+p[8].value+bcolors.ENDC)
+            globalErrorSintactico['error']=True
+    raise SyntaxError
+
+def p_funcion_end_wlocals_Error(p):
+    '''
+     fun : FUN funname  '(' ')' BEGIN  statements error
+    '''
+    global globalErrorSintactico
+    if not globalErrorLex['error'] and not globalErrorSintactico['error']:
+        if(p[7]).type == 'END':
+            print(bcolors.FAIL+"\t ';' redundante, antes de "+p[7].type+"  "+p[7].value+bcolors.ENDC)
+            globalErrorSintactico['error']=True
+        else:
+            print(bcolors.FAIL+"\tNo se ha encontrado ningun END, antes de "+p[7].type+"  "+p[7].value+bcolors.ENDC)
+            globalErrorSintactico['error']=True
+    raise SyntaxError
+
+
+def p_funcion_end_args_Error(p):
+    '''
+     fun : FUN funname  '(' parameters ')' locals  BEGIN  statements error
+    '''
+    global globalErrorSintactico
+    if not globalErrorLex['error'] and not globalErrorSintactico['error']:
+        if(p[9]).type == 'END':
+            print(bcolors.FAIL+"\t ';' redundante, antes de "+p[9].type+"  "+p[9].value+bcolors.ENDC)
+            globalErrorSintactico['error']=True
+        else:
+            print(bcolors.FAIL+"\tNo se ha encontrado ningun END, antes de "+p[9].type+"  "+p[9].value+bcolors.ENDC)
+            globalErrorSintactico['error']=True
+    raise SyntaxError
+
+
+def p_funcion_end_args_wlocals_Error(p):
+    '''
+     fun : FUN funname  '(' parameters ')' BEGIN  statements error
     '''
     global globalErrorSintactico
     if not globalErrorLex['error'] and not globalErrorSintactico['error']:
@@ -87,6 +128,17 @@ def p_statements_statement_semicolon(p):
     '''
     p[1].append(p[3])
     p[0] = p[1]
+
+
+
+def p_statements_statement_lambda(p):
+    '''
+    statements :
+    '''
+    if not globalErrorLex['error'] and not globalErrorSintactico['error']:
+        print(bcolors.FAIL+"\tBloque de instrucciones vacio en una funcion del programa."+bcolors.ENDC)
+        globalErrorSintactico['error']=True
+    raise SyntaxError
 
 
 
@@ -111,6 +163,16 @@ def p_statement_WHILE(p):
     statement : WHILE logica  DO statements %prec SEMICOLON
     '''
     p[0]=WhileStatement(logica=p[2],statements=p[4])
+
+def p_statement_WHILE_nologerror(p):
+    '''
+    statement : WHILE DO statements %prec SEMICOLON
+    '''
+    global globalErrorSintactico
+    if not globalErrorLex['error']:
+        print(bcolors.FAIL+"\tNo se ha encontrado ninguna relacion logica para la sentencia WHILE en la linea :"+bcolors.ENDC)
+        globalErrorSintactico['error']=True
+    raise SyntaxError
 
 def p_statement_IF_ELSE(p):
     '''
@@ -539,7 +601,7 @@ if __name__ == '__main__':
         sys.stdout.write("ha habido un error en la lectura del archivo. Leyendo en entrada estandar:\n")
         data = sys.stdin.read()
     ast = parse.parse(data,debug = 0)
-    if ast  and ((not globalErrorSintactico['error']) or (not globalErrorLex['error'])) :
+    if ast  and ((not globalErrorSintactico['error']) and (not globalErrorLex['error'])) :
         print ('''
               La representacion de el arbol de sintaxis abstracto de el programa analizado
               se muestra en un archivo nuevo creado llamado RepresentacionAST.txt
