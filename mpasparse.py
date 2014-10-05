@@ -166,13 +166,12 @@ def p_statement_WHILE(p):
 
 def p_statement_WHILE_nologerror(p):
     '''
-    statement : WHILE DO statements %prec SEMICOLON
+    statement : WHILE error DO statements %prec SEMICOLON
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error']:
-        print(bcolors.FAIL+"\tNo se ha encontrado ninguna relacion logica para la sentencia WHILE en la linea :"+bcolors.ENDC)
+    if not globalErrorLex['error'] and not globalErrorSintactico['error']:
+        print(bcolors.FAIL+"\tNo se ha encontrado ninguna relacion logica para la sentencia WHILE antes de "+p[2].type+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
 
 def p_statement_IF_ELSE(p):
     '''
