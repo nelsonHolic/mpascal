@@ -1,0 +1,226 @@
+Gramática compiladores
+S : {program}
+
+Sigma: {G,GE,L,LE,E,NE,’;’,’(‘,’)’,’[‘,’]’,’:’,’:=’,PRINT,RETURN,WHILE,THEN,DO,BEGIN,END,SKIP,BREAK,FUN,ID,STRING,ELSE,IF,READ,WRITE,OR,AND,NOT,INT,FLOAT,’+’,’-’,’/’,’*’}
+
+U :
+{defvar,tipo,digito,int,float,expression,valor,comparador,logica,assign,statement,args,explog,funname,parameters}
+
+Reglas P:
+program : program fun | fun
+;
+
+fun : FUN funname  ‘(‘ parameters ‘)’ locals  BEGIN  statements END
+| FUN funname’(‘’)’ locals BEGIN statements END
+;
+
+parameters : defvar ‘,’ parameters
+| defvar
+;
+
+args :  args ‘,’ valor
+| valor
+;
+
+locals : locals  defvar ';'
+| locals fun ';'
+| fun ‘;’
+| defvar ‘;’
+;
+
+statement : WHILE logica  DO statements
+| IF logica THEN statements ELSE statements
+| IF logica THEN statements
+| SKIP
+| BREAK
+| RETURN expression
+| PRINT ’(‘ ‘\“‘ STRING ’\”’ ’)’
+| WRITE ‘(‘ expression ’)’
+| READ ‘(‘ ID‘)’
+| BEGIN  statements   END
+| expression
+| assign
+| defvar
+;
+
+statements : statements ';' statement  | statement
+
+funname :  ID ;
+
+valor : ID
+| INT
+| FLOAT
+| number
+;
+
+defvar :  ID ‘:’  tipo
+| ID ‘:’ tipo ‘[‘ valor ‘]’
+;
+
+assign :  ID ‘:=’  valor
+| ID ’[‘ valor ’]’ ‘:=’ valor
+| ID ‘[‘ valor ‘]’ ‘:=’ ID ‘[‘ valor ‘]’
+;
+
+tipo : int
+| float
+ ;
+
+int : INT
+ ;
+
+float :  FLOAT
+;
+
+expression : expression ‘+’ valor
+| expression '-'valor
+|  expression ‘/’ valor
+| expression  ‘*’ valor
+| INT’(‘ valor ‘)’
+| FLOAT ‘(‘ valor ‘)’
+| funname  ‘(‘ args ‘)’
+| funname’(‘’)’
+| valor
+;
+
+comparador  : ‘<’
+| ‘>‘
+| ‘>=’
+|  ‘<=’
+|  ‘==’
+|   ‘!=’
+;
+
+explog : OR
+| AND
+|  NOT
+;
+
+relacion : expression comparador expression
+;
+
+logica : logica explog relacion
+| '(' logica  ')' explog  relacion
+|relacion
+;
+
+
+
+BNFE
+
+S : {program}
+
+Sigma: {G,GE,L,LE,E,NE,’;’,’(‘,’)’,’[‘,’]’,’:’,’:=’,PRINT,RETURN,WHILE,THEN,DO,BEGIN,END,SKIP,BREAK,FUN,ID,STRING,ELSE,IF,READ,WRITE,OR,AND,NOT,INT,FLOAT,’+’,’-’,’/’,’*’}
+
+U :
+{defvar,tipo,digito,int,float,expression,valor,comparador,logica,assign,statement,args,explog,funname,parameters}
+
+
+Reglas P:
+
+program : fun+
+;
+
+
+fun : FUN funname  ‘(‘ parameters ? ‘)’ locals  BEGIN  statements END
+;
+
+
+parameters : (defvar ‘,’ )* defvar
+;
+
+
+args :  (valor ‘,’)* valor
+;
+
+
+locals : ((defvar ';' )* (fun ';' ) *)*
+;
+
+
+statement : WHILE logica  DO statements
+| IF logica THEN statements ELSE statements
+| IF logica THEN statements
+| SKIP
+| BREAK
+| RETURN expression
+| PRINT ’(‘ ‘\“‘ string ’\”’ ’)’
+| WRITE ‘(‘ expression ’)’
+| READ ‘(‘ ID‘)’
+| BEGIN  statements   END
+| expression
+| assign
+| defvar
+;
+
+
+statements : (statement ‘;’ )* statement
+;
+
+funname :  ID ;
+
+
+valor : ID
+| int
+| float
+| expression
+| number
+;
+
+defvar :  ID ‘:’  tipo
+| ID ‘:’ tipo ‘[‘ valor ‘]’
+;
+
+
+assign :  ID ‘:=’  valor | ID ‘:=’  ID
+| ID ’[‘ valor ’]’ ‘:=’ valor
+| ID ‘[‘ valor ‘]’ ‘:=’ ID ‘[‘ valor ‘]’
+;
+
+
+tipo : int
+| float
+| number
+;
+
+int : INT
+;
+
+float :  FLOAT
+;
+
+number : int
+| float
+;
+
+
+
+
+expression :valor ( (‘+’ | ‘-’ | ‘/’ |  ‘*’) valor) +
+| int’(‘ valor ‘)’
+| float ‘(‘ valor ‘)’
+| funname  ‘(‘ args ‘)’
+| funname’(‘’)’
+| valor
+;
+
+comparador  : ‘<’
+| ‘>‘
+| ‘>=’
+|  ‘<=’
+|  ‘==’
+|   ‘!=’
+;
+
+explog : OR
+| AND
+|  NOT
+;
+
+relacion : expression comparador expression
+;
+
+
+logica : relacion  (explog ( '('relacion ')' | relacion ) )+
+| relacion
+;
