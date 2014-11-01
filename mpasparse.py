@@ -4,7 +4,6 @@ __authors__ = 'noescobar,rass,anagui'
 
 import ply.yacc as yacc
 from mpaslex import *
-import sys
 from mpasast import *
 
 
@@ -15,8 +14,8 @@ precedence = (
     ('right','ELSE'),
     ('left','error'),
     ('left', 'OR','NOT', 'AND'),
-    ('left','*','/'),
     ('left','+','-'),
+    ('left','*','/'),
     ('right','IFRule'),
     ('left','SEMICOLON'),
 )
@@ -25,8 +24,10 @@ def p_program_funciones(p) :
     '''
     program : program fun
     '''
-    p[1].append(p[2])
-    p[0]=p[1]
+    global globalErrorSintactico
+    if not globalErrorSintactico['error']:
+        p[1].append(p[2])
+        p[0]=p[1]
 
 def p_program(p) :
     '''
@@ -63,17 +64,6 @@ def p_funcion(p):
      fun : FUN funname  '(' ')' locals  BEGIN  statements END
     '''
     p[0]=Funcion(ID=p[2],parameters=None, locals=p[5],statements=p[7])
-
-
-# def p_funcion_end_Error(p):
-#     '''
-#      fun : FUN funname  '(' ')' locals  BEGIN END
-#     '''
-#     global globalErrorSintactico
-#     if not globalErrorLex['error'] and not globalErrorSintactico['error']:
-#         print(bcolors.FAIL+"\t bloque de instrucciones vacio "+p[7].type+"  "+p[7].value+bcolors.ENDC)
-#         globalErrorSintactico['error']=True
-#     raise  SyntaxError
 
 
 def p_funcion_end_Error(p):
@@ -115,7 +105,7 @@ def p_funcion_end_args_Error(p):
         else:
             print(bcolors.FAIL+"\tNo se ha encontrado ningun END, antes de "+p[9].value+bcolors.ENDC)
             globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 
 def p_funcion_end_args_wlocals_Error(p):
@@ -130,7 +120,7 @@ def p_funcion_end_args_wlocals_Error(p):
         else:
             print(bcolors.FAIL+"\tNo se ha encontrado ningun END, antes de "+p[8].value+bcolors.ENDC)
             globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 def p_funcion_args_BEGIN_Error(p):
     '''
@@ -146,8 +136,10 @@ def p_statements_statement_semicolon(p):
     '''
     statements : statements ';'  statement
     '''
-    p[1].append(p[3])
-    p[0] = p[1]
+    global globalErrorSintactico
+    if not globalErrorSintactico['error']:
+        p[1].append(p[3])
+        p[0] = p[1]
 
 
 
@@ -160,7 +152,7 @@ def p_statements_statement_semicolon_error(p):
     if not globalErrorLex['error'] and not globalErrorSintactico['error']:
         print(bcolors.FAIL+"\tNo se ha encontrado ningun ';', antes del "+p[2].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 def p_statements_statement(p):
     '''
@@ -179,7 +171,7 @@ def p_statements_statement_empty_error(p):
     if not globalErrorLex['error'] and not globalErrorSintactico['error']:
         print(bcolors.FAIL+"\t bloque de instrucciones vacio"+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 
 
@@ -269,10 +261,10 @@ def p_statement_PRINT_RPARENT_Error(p):
     statement : PRINT '(' STRING error
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         print(bcolors.FAIL+"\t Parentesis desvalanceado, antes del "+p[4].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 
 def p_statement_PRINT_STRING_ERROR(p):
@@ -280,10 +272,10 @@ def p_statement_PRINT_STRING_ERROR(p):
     statement : PRINT '(' error ')'
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         print(bcolors.FAIL+"\t No se ha encontrado ningun string para el print, en su lugar se encontro "+p[3].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 
 def p_statement_WRITE(p):
@@ -297,10 +289,10 @@ def p_statement_WRITE_RPAREN_error(p):
     statement : WRITE '(' expression error
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         print(bcolors.FAIL+"\t Parentesis desvalanceado para la instruccion write, antes del "+p[4].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 
 def p_statement_WRITE_expresion_error(p):
@@ -308,13 +300,13 @@ def p_statement_WRITE_expresion_error(p):
     statement : WRITE '(' error ')'
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         if p[3].value == ')':
             print(bcolors.FAIL+"\t Write vacio, se necesita una expresion"+bcolors.ENDC)
         else:
             print(bcolors.FAIL+"\t No se encontro ninguna expresion valida para la instruccion write, en su lugar se encontro "+p[3].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 
 
@@ -329,10 +321,10 @@ def p_statement_READ_RPAREN_Error(p):
     statement : READ '(' ID error
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         print(bcolors.FAIL+"\t Parentesis desvalanceado para la instruccion read, antes del "+p[4].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 
 def p_statement_READ_LPAREN_Error(p):
@@ -340,10 +332,10 @@ def p_statement_READ_LPAREN_Error(p):
     statement : READ error ID ')'
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         print(bcolors.FAIL+"\t Parentesis inicial desvalanceado para la instruccion read"+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 
 
@@ -352,13 +344,13 @@ def p_statement_READ_Empty_Error(p):
     statement : READ '(' error ')'
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         if p[3].value == ')':
             print(bcolors.FAIL+"\t Read vacio, se necesita una direccion"+bcolors.ENDC)
         else:
             print(bcolors.FAIL+"\t No se encontro ninguna direccion para la instruccion read, en su lugar se encontro "+p[3].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 
 def p_statement_READ_vect(p):
@@ -374,10 +366,10 @@ def p_statement_READ_VEC_RBRAKECT_Error(p):
     statement : READ '(' ID error expression ']' ')'
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         print(bcolors.FAIL+"\t No se encontro ningun '[' para la direccion "+p[3].value+", en la instruccion read, en su lugar se encontro "+p[4].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 
 def p_statement_READ_VEC_ID_Error(p):
@@ -385,10 +377,10 @@ def p_statement_READ_VEC_ID_Error(p):
     statement : READ '(' error '[' expression ']' ')'
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         print(bcolors.FAIL+"\t No se encontro ninguna direccion para la instruccion read, en su lugar se encontro "+p[3].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 
 
@@ -397,10 +389,10 @@ def p_statement_READ_VEC_EXPR_Error(p):
     statement : READ '(' ID '[' error ']' ')'
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         print(bcolors.FAIL+"\t Expresion invalida para la direccion "+p[3]+", en la instruccion read, en su lugar se encontro "+p[5].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 
 
@@ -410,10 +402,10 @@ def p_statement_READ_VEC_RBRACKET_Error(p):
     statement : READ '(' ID '[' expression error ')'
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         print(bcolors.FAIL+"\t No se encontro ningun ']', en la instruccion read, antes de "+p[6].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 
 def p_statement_READ_VEC_PARENT_Error(p):
@@ -421,10 +413,10 @@ def p_statement_READ_VEC_PARENT_Error(p):
     statement : READ '(' ID '[' expression ']' error
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         print(bcolors.FAIL+"\t parentesis desvalanceado , en la instruccion read, antes de "+p[7].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 
 
@@ -439,10 +431,10 @@ def p_statement_end_ERROR(p):
     statement : BEGIN  statements  error
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         print(bcolors.FAIL+"\t no se ha encontrado ningun END, antes de "+p[3].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 def p_statement_expression(p):
     '''
@@ -460,8 +452,10 @@ def p_locals_defvarrecur(p):
     '''
     locals : locals  defvar ';'
     '''
-    p[1].append(p[2])
-    p[0]= p[1]
+    global globalErrorSintactico
+    if not globalErrorSintactico['error']:
+        p[1].append(p[2])
+        p[0]= p[1]
 
 
 def p_locals_defvarrecur_error(p):
@@ -469,18 +463,20 @@ def p_locals_defvarrecur_error(p):
     locals : locals  defvar error
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         print(bcolors.FAIL+"\t No se a encontrado ningun ';', antes del "+p[3].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 
 def p_locals_funrecur(p):
     '''
     locals : locals fun ';'
     '''
-    p[1].append(p[2])
-    p[0]=p[1]
+    global globalErrorSintactico
+    if not globalErrorSintactico['error']:
+        p[1].append(p[2])
+        p[0]=p[1]
 
 
 def p_locals_funrecur_error(p):
@@ -488,10 +484,10 @@ def p_locals_funrecur_error(p):
     locals : locals fun error
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         print(bcolors.FAIL+"\t No se a encontrado ningun ';', antes del "+p[2].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 def p_locals_fun(p):
     '''
@@ -504,10 +500,10 @@ def p_locals_fun_eror(p):
     locals : fun error
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         print(bcolors.FAIL+"\t No se a encontrado ningun ';', antes del "+p[2].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 def p_locals_defvar(p):
     '''
@@ -520,10 +516,10 @@ def p_locals_defvar_error(p):
     locals : defvar error
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         print(bcolors.FAIL+"\t No se a encontrado ningun ';', antes del "+p[2].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 def p_logica_simple(p):
     '''
@@ -538,10 +534,10 @@ def p_logica_op_error(p):
     logica : logica error logica
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         print(bcolors.FAIL+"\t No se a encontrado ningun conector logico, antes del "+p[2].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 
 def p_logica_simple_not(p):
@@ -571,7 +567,7 @@ def p_logica_complex_error2(p):
     if not globalErrorLex['error']:
         print(bcolors.FAIL+"\tParentesis desbalanceado."+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 def p_logica_relacion(p):
     '''
@@ -628,6 +624,14 @@ def p_valor_ID_vect(p):
     '''
     p[0]=Variable(ID=p[1],valor=p[3])
 
+def p_valor_ID_vect_Error(p):
+    '''
+    valor : ID '[' logica ']'
+    '''
+    if not globalErrorLex['error']:
+        print(bcolors.FAIL+"\t valor invalido : operacion logica"+bcolors.ENDC)
+        globalErrorSintactico['error']=True
+
 def p_valor_NINT(p):
     '''
     valor : NINT
@@ -653,7 +657,7 @@ def p_defvar_id_tipo_error(p):
     if not globalErrorLex['error']:
         print(bcolors.FAIL+"\t tipo invalido : "+p[3].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 def p_defvar_vect(p):
     '''
@@ -678,8 +682,10 @@ def p_parameters_multi(p):
     '''
     parameters : parameters ',' defvar
     '''
-    p[1].append(p[3])
-    p[0]= p[1]
+    global globalErrorSintactico
+    if not globalErrorSintactico['error']:
+        p[1].append(p[3])
+        p[0]= p[1]
 
 
 def p_parameters_multi_error(p):
@@ -687,16 +693,16 @@ def p_parameters_multi_error(p):
     parameters : parameters error defvar
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         print(bcolors.FAIL+"\t No se a encontrado ninguna ',', antes del "+p[2].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 def p_parameters_unique(p) :
     '''
     parameters : defvar
     '''
-    p[0] = Parameters(param_decls=[p[0]])
+    p[0] = Parameters(param_decls= [p[1]])
 
 
 def p_assign_val(p):
@@ -711,10 +717,10 @@ def p_assign_val_error(p):
     assign :  ID error expression
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         print(bcolors.FAIL+"\t No se a encontrado ningun ':=', en su lugar se encontro "+p[2].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 
 def p_assign_vec(p):
@@ -728,7 +734,7 @@ def p_assign_vec_RBRAKECT_error(p):
     assign : ID '[' expression error ASIGSIM expression
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         print(bcolors.FAIL+"\t No se a encontrado ningun ']', en su lugar se encontro "+p[4].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
 
@@ -738,10 +744,10 @@ def p_assign_vec_expresion_error(p):
     assign : ID '[' error ']' ASIGSIM expression
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         print(bcolors.FAIL+"\t Expresion invalidad, en su lugar se encontro "+p[3].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 
 def p_assign_vec_error(p):
@@ -749,10 +755,10 @@ def p_assign_vec_error(p):
     assign : ID '[' expression ']' error expression
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         print(bcolors.FAIL+"\t No se a encontrado ningun ':=', en su lugar se encontro "+p[2].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 
 def p_expression_plus(p):
@@ -779,10 +785,10 @@ def p_expression_times_error(p):
     expression : expression '*' error expression
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         print(bcolors.FAIL+"\t valor incorrecto despues de *, en su lugar se encontro "+p[3].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 
 def p_expression_divide(p):
@@ -797,10 +803,10 @@ def p_expression_divide_error(p):
     expression : expression '/' error expression
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         print(bcolors.FAIL+"\t valor incorrecto despues de /, en su lugar se encontro "+p[3].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 
 
@@ -837,10 +843,10 @@ def p_expression_int_RPAREN_error(p):
     expression : INT '(' expression  error
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         print(bcolors.FAIL+"\t Parentesis derecho desvalanceado, antes del "+p[4].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 
 
@@ -856,10 +862,10 @@ def p_expression_float_RPAREN_error(p):
     expression : FLOAT '(' expression error
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         print(bcolors.FAIL+"\t Parentesis derecho desvalanceado, antes del "+p[4].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 
 def p_expression_funargs(p):
@@ -873,10 +879,10 @@ def p_expression_funargs_RPAREN(p):
     expression : funname '(' args error
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         print(bcolors.FAIL+"\t Parentesis derecho desvalanceado de la funcion "+p[1]+", antes del "+p[4].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 def p_expression_fun(p):
     '''
@@ -888,18 +894,20 @@ def p_args_MULTI(p):
     '''
     args : args ',' expression
     '''
-    p[1].append(p[3])
-    p[0] = p[1]
+    global globalErrorSintactico
+    if not globalErrorSintactico['error']:
+        p[1].append(p[3])
+        p[0] = p[1]
 
 def p_args_MULTI_error(p):
     '''
     args : args error expression
     '''
     global globalErrorSintactico
-    if not globalErrorLex['error'] and  not globalErrorSintactico['error']:
+    if not globalErrorLex['error'] :
         print(bcolors.FAIL+"\t No se a encontrado ningun ',', antes de "+p[2].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
-    raise SyntaxError
+    
 
 def p_args(p):
     '''
@@ -945,7 +953,7 @@ if __name__ == '__main__':
         outFile = open('RepresentacionAST.txt','w')
         try:
             ast.pprint2(outFile) # crea el archivo de impresion RepresentacionAST.txt
-            print('Done!\n')
+            print('Done!')
             print ('''
                   La representacion de el arbol de sintaxis abstracto de el programa analizado
                   se muestra en un archivo nuevo creado llamado RepresentacionAST.txt
@@ -954,4 +962,6 @@ if __name__ == '__main__':
         except KeyboardInterrupt:
             print('escritura del arbol cancelada... saliendo')
         outFile.close()
+    else:
+        ast = None
 

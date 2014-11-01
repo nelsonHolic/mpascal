@@ -62,7 +62,6 @@ class AST(object):
             if type(archivo) == file:
                 archivo.write(salida)
             else:
-                '<div></div>'
                 print salida
 
     #este es elmetodo encargado de mostrar como esta contruido el arbol permitiendo crear un string segun como este conformado
@@ -167,15 +166,6 @@ class Entero(AST):
     '''
     _fields = ['INT']
 
-    def __repr__(self, stringBefore = None):
-            stringReturn = ''
-            if stringBefore:
-                stringReturn = stringBefore+self.__class__.__name__
-                if self.INT:
-                    stringReturn += "\n"+stringBefore+(" "*4)+"Valor   : "+self.INT
-            else:
-                stringReturn = self.__class__.__name__
-            return stringReturn
 
 
 class Float(AST):
@@ -190,21 +180,6 @@ class Variable(AST):
     '''
     _fields = ['ID','valor']
 
-    def __repr__(self, stringBefore = None):
-        stringReturn = ''
-        if stringBefore:
-            stringReturn= stringBefore+self.__class__.__name__#+" : "+ (self.ID if self.ID else self.valor)
-            if self.ID:
-                stringReturn += "\n"+stringBefore+(" "*4)+"ID : "+self.ID
-            if self.valor:
-                if type(self.valor) == str:
-                    stringReturn += "\n"+stringBefore+(" "*4)+"valor : "+self.valor
-                else:
-                    stringReturn += "\n"+stringBefore+(" "*4)+"valor : \n"+self.valor.__repr__(stringBefore = stringBefore+(" "*8))
-
-        else:
-            stringReturn =  self.__class__.__name__
-        return stringReturn
 
 @validate_fields(funlist=list)
 class Program(AST):
