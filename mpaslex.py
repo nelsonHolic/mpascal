@@ -10,7 +10,7 @@ __author__ = 'noescobar,rass,anagui'
 # ------------------------------------------------------------
 
 import ply.lex as lex
-
+from symtab import *
 import sys
 
 sys.path.append("../..")
@@ -143,6 +143,8 @@ def t_ID(t):
     r'[a-zA-Z_][a-zA-Z_0-9]*'
     if t.value.upper() in PALABRAS_RESERVADAS:
         t.type = t.value.upper()
+#    else:
+#        attach_symbol(t)
     return t
 
 
@@ -212,6 +214,9 @@ def t_error(t):
     print (bcolors.FAIL+"Error lexico:\n\t se a detectado el caracter illegal '%s' en la linea %d" % (t.value[0],t.lexer.lineno)+bcolors.ENDC)
     t.lexer.skip(1)
 
+
+
+new_scope()
 
 lexer = lex.lex()
 

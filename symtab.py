@@ -3,6 +3,17 @@
 _scope=[]
 current=None
 
+class Errorsemantico(Exception):
+
+    def __init__(self, *args, **kwargs): # real signature unknown
+        pass
+
+
+    @staticmethod # known case of __new__
+    def __new__(S, *more):
+        pass
+
+
 class Symbol(): #att : name scope level
 
     def __init__(self,name,scope,level,type,lineno):
@@ -51,11 +62,13 @@ def add_symbol(name,type,lineno):
 def set_symbol(s):
     current[s.name]=s # ingresamos a current[print]=print
 
-def attach_symbol(t):
+def attach_symbol(t,type):
     s=current.get(t.value)
     if not s:
-        s=add_symbol(t.value,t.type,t.lexer.lineno)
-        s.lineno=t.lexer.lineno
+        s=add_symbol(t.value,type,t.lexer.lineno)
+    else:
+        print("Redefinicion de %s" % t.value)
+        raise Errorsemantico
     t.symtab=s
 
 

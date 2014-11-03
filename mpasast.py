@@ -12,6 +12,7 @@ añadir más.
 '''
 
 import sys
+from symtab import *
 
 class bcolorsAST:
     HEADER = '\033[95m'
@@ -33,6 +34,7 @@ class AST(object):
     también asignados.
     '''
     _fields = []
+    symt=None
     def __init__(self,*args,**kwargs):
         boolargs = len(args) == len(self._fields)
         boolkwargs = len(kwargs) == len(self._fields)
@@ -133,7 +135,8 @@ class AST(object):
     def __repr__(self, stringBefore = None):
         return self.__class__.__name__
 
-
+    def Analisissemantico(self):
+        pass
 
 def validate_fields(**fields):
     def validator(cls):
@@ -188,6 +191,15 @@ class Program(AST):
     def append(self,fun):
         self.funlist.append(fun)
 
+    def Analisissemantico(self):
+        self.symt=new_scope()
+        current=self.symt
+        for func in self.funlist:
+            func.Analisissemantico()
+            self.symt=pop_scope()
+            current=self.symt
+
+
 
 @validate_fields(statements=list)
 class Statements(AST):
@@ -196,8 +208,24 @@ class Statements(AST):
     def append(self,statement):
         self.statements.append(statement)
 
+        def Analisissemantico(self):
+        self.symt=new_scope()
+        current=self.symt
+        for statement in self.funlist:
+            statement.Analisissemantico()
+            current=self.symt
+
 class Funcion(AST):
     _fields = ['ID', 'parameters', 'locals','statements']
+
+    def Analisissemantico(self):
+        self.symt=new_scope()
+        for param in self.parameters:
+            attach_symbol(param[0],param[1])
+        for local in self.locals:
+            attach_symbol(local[0],local[1])
+        for statement in self.statements:
+            statement.Analisissemantico()
 
 
 @validate_fields(param_decls=list)
@@ -229,10 +257,26 @@ class ParamDecl(AST):
 class AssignStatement(AST):
     _fields = ['ID', 'expression']
 
+    def Analisissemantico(self):
+        m=get_symbol(self.ID)
+        if (m.type==self.expression.type):
+            pass
+        else:
+            print("Error en la asignacion de %s en la linea %s , %s es de tipo %s y se le esta asignando un valor del tipo %s" % (m.name,str(m.lineno),m.name,m.type,self.expression.type))
 
 
 class AssignVecStatement(AST):
     _fields = ['ID','posexpreori', 'expression']
+
+    def Analisissemantico(self):
+        m=get_symbol(self.ID)
+        if (m.type==self.expression.type):
+            pass
+        elif type(self.posexpreori)!=type(1) :
+            print("Error en el indice de la variable %s en la linea %s"% (m.name,str(m.lineno)))
+        else:
+            print("Error en la asignacion de %s en la linea %s , %s es de tipo %s y se le esta asignando un valor del tipo %s" % (m.name,str(m.lineno),m.name,m.type,self.expression.type))
+
 
 class exprStatement(AST):
     _fields = ['expression']
@@ -245,6 +289,9 @@ class ReadStatement(AST):
 
 class ReadStatementVect(AST):
     _fields = ['ID','posexpre']
+
+    def Analisissemantico(self):
+        pass
 
 class WriteStatement(AST):
     _fields = ['expression']
@@ -280,6 +327,9 @@ class signexpression(AST):
 class Expression(AST):
     _fields = ['op', 'left', 'right']
 
+    def Analisissemantico(self):
+        pass
+
 class UnariExpression(AST):
     _fields = ['op','right']
 
@@ -296,12 +346,6 @@ class logicaOp(AST):
 
 class FunCall(AST):
     _fields = ['ID', 'args']
-
-# class ExprList(AST):
-#     _fields = ['expressions']
-#
-#     def append(self, e):
-#         self.expressions.append(e)
 
 
 
