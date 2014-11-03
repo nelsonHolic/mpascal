@@ -11,7 +11,15 @@ nodos AST pueden ser encontrados al comienzo del archivo.  Usted deberá
 añadir más.
 '''
 
+'''
+To do :
+Falta corregir los mensajes de error
+Falta chequear que no se redefina una variable/parametro en una funcion de locals # pregunta a eingel
+Falta nose
+'''
+
 import sys
+from ply.lex import LexToken
 
 class bcolorsAST:
     HEADER = '\033[95m'
@@ -22,14 +30,98 @@ class bcolorsAST:
     ENDC = '\033[0m'
 
 
+
+
+_scope=[]
+current=None
+
+class Errorsemantico(Exception):
+
+    def __init__(self, valor,lineno): # real signature unknown
+        self.valor=valor
+        self.lineno = lineno
+
+    def __str__(self):
+        lineno = ""
+        if(self.lineno):
+            lineno = self.lineno
+        return repr(self.valor)+repr(lineno)
+
+
+
+class Symbol(): #att : name scope level
+    paramnum=None
+    def __init__(self,name,scope,type,lineno):
+        self.name=name
+        self.scope=scope
+        self.type=type
+        self.lineno=lineno
+
+    def changetype(self,type):
+        self.type=type
+
+
+def new_scope():# crea una nueva tabla de simbolos || usar cada vez que entra a una funcion
+    global current
+    global _scope
+    current={}
+    #print _scope
+    _scope.append(current)
+    return current
+
+def pop_scope(): # cada que se sale de una funcion
+    global current
+    global _scope
+    r=_scope.pop()
+    current=_scope[-1]
+    return r
+
+def get_symbol(name,level=0,attr=None):
+    global _scope
+    for i in range(len(_scope)-(level+1),-1,-1):
+        s=_scope[i]
+        try:
+            sym=s[name]
+            # if attr:
+            #     if hasattr(sym,attr):
+            #         return sym
+            #     else :
+            return sym
+        except KeyError :
+            pass
+    return None
+
+def add_symbol(name,type,lineno):
+    global current
+    s=Symbol(name=name,scope=current,type=type,lineno=lineno)
+    current[name]=s
+    #print current
+    return s
+
+def set_symbol(s):
+    global current
+    current[s.name]=s # ingresamos a current[print]=print
+
+def attach_symbol(t,type):
+    global current
+    s=current.get(t.value)
+    if not s:
+        s=add_symbol(t.value,type,t.lexer.lineno)
+    else:
+        print("Redefinicion de %s" % t.value)
+    t.symtab=s
+
+
+
+
 # NO MODIFICAR
 class AST(object):
     '''
-    Clase base para todos los nodos del AST.  Cada nodo se espera 
+    Clase base para todos los nodos del AST.  Cada nodo se espera
     definir el atributo _fields el cual enumera los nombres de los
     atributos almacenados.  El método a continuación __init__() toma
     argumentos posicionales y los asigna a los campos apropiados.
-    Cualquier argumento adicional especificado como keywords son 
+    Cualquier argumento adicional especificado como keywords son
     también asignados.
     '''
     _fields = []
@@ -97,15 +189,20 @@ class AST(object):
                                     else:
                                         try:
                                             numeroDeHijos += 1
-                                            stringReturn += "\n"+stringBefore+" "+"+"+("-"*4)+atributo+" : "+str(nodoHijo)
+                                            if  isinstance(hijo,LexToken):
+                                                stringReturn += "\n"+stringBefore+" "+"+"+("-"*4)+atributo+" : "+str(nodoHijo.value)
+                                            else:
+                                                stringReturn += "\n"+stringBefore+" "+"+"+("-"*4)+atributo+" : "+str(nodoHijo)
                                         except Exception,e:
                                             sys.exit(bcolorsAST.WARNING+'arbol muy profundo, no puede escribirse el archivo'+bcolorsAST.ENDC)
                         else:
                             try:
-                                numeroDeHijos += 1
-                                stringReturn += "\n"+stringBefore+" "+"+"+("-"*4)+atributo+" : "+str(nodoHijo)
+                                if isinstance(nodoHijo,LexToken):
+                                    stringReturn += "\n"+stringBefore+" "+"+"+("-"*4)+atributo+" : "+str(nodoHijo.value)
+                                else:
+                                    stringReturn += "\n"+stringBefore+" "+"+"+("-"*4)+atributo+" : "+str(nodoHijo)
                             except Exception,e:
-                                print('problema en la escritura')
+                                print(e)
                 vecStringReturn = stringReturn.split("\n")
                 if len(vecStringReturn)/6 >= 1000:
                     pass #print("Profundidad del la rama muy profundo, simplificando el arbol")
@@ -133,7 +230,8 @@ class AST(object):
     def __repr__(self, stringBefore = None):
         return self.__class__.__name__
 
-
+    def Analisissemantico(self):
+        pass
 
 def validate_fields(**fields):
     def validator(cls):
@@ -153,7 +251,7 @@ def validate_fields(**fields):
 # del apropiado _fields = [] que indique que campos deben ser almacenados.
 # A modo de ejemplo, para un operador binario es posible almacenar el
 # operador, la expresión izquierda y derecha, como esto:
-# 
+#
 #    class Binop(AST):
 #        _fields = ['op','left','right']
 # ----------------------------------------------------------------------
@@ -164,6 +262,7 @@ class Entero(AST):
     '''
     Un valor constante como 2, 2.5, o "dos"
     '''
+    type=int
     _fields = ['INT']
 
 
@@ -172,13 +271,23 @@ class Float(AST):
     '''
     Un valor constante como 2, 2.5, o "dos"
     '''
+    type=float
     _fields = ['FLOAT']
 
 class Variable(AST):
     '''
     Un valor constante como 2, 2.5, o "dos"
     '''
+    type=None
     _fields = ['ID','valor']
+
+    def Analisissemantico(self):
+        n=get_symbol(self.ID.value)
+        #print self.ID.value
+        if not n:
+            print("Error no existe la variable %s en la linea %s"% (self.ID.value,str(self.ID.lineno)))
+        else:
+            self.type=n.type
 
 
 @validate_fields(funlist=list)
@@ -188,6 +297,20 @@ class Program(AST):
     def append(self,fun):
         self.funlist.append(fun)
 
+    def Analisissemantico(self):
+        global _scope
+        global current
+        current=new_scope()
+        for func in self.funlist:
+            func.Analisissemantico()
+
+        m=get_symbol("main")
+        if not m:
+            print(" Error : funcion main no definida.")
+
+
+
+
 
 @validate_fields(statements=list)
 class Statements(AST):
@@ -196,8 +319,35 @@ class Statements(AST):
     def append(self,statement):
         self.statements.append(statement)
 
-class Funcion(AST):
+    def Analisissemantico(self):
+        for statement in self.statements:
+            statement.Analisissemantico()
+
+class Funcion(AST): # <----------------------
+
+    type = None
     _fields = ['ID', 'parameters', 'locals','statements']
+
+    def Analisissemantico(self):
+        global current
+        global _scope
+        attach_symbol(self.ID,None)
+        m = get_symbol(self.ID.value)
+        new_scope()
+        if self.parameters:
+            self.parameters.Analisissemantico()
+            m.params= self.parameters.param_decls
+            set_symbol(m)
+        if self.locals:
+            self.locals.Analisissemantico()
+        self.statements.Analisissemantico()
+        m = get_symbol("%return")
+        if m:
+            a = get_symbol(self.ID.value)
+            self.type  = m.type
+            a.type = self.type
+        pop_scope()
+
 
 
 @validate_fields(param_decls=list)
@@ -207,6 +357,10 @@ class Parameters(AST):
     def append(self,param):
         self.param_decls.append(param)
 
+    def Analisissemantico(self):
+        for parameter in self.param_decls:
+            parameter.Analisissemantico()
+
 
 @validate_fields(localsList=list)
 class Locals(AST):
@@ -214,6 +368,11 @@ class Locals(AST):
 
     def append(self,vardec):
         self.localsList.append(vardec)
+
+    def Analisissemantico(self):
+        for local in self.localsList :
+            local.Analisissemantico()
+
 
 
 @validate_fields(argsList=list)
@@ -223,19 +382,48 @@ class Args(AST):
     def append(self, arg):
         self.argsList.append(arg)
 
-class ParamDecl(AST):
-    _fields = ['ID', 'tipo']
+    #
+    # def Analisissemantico(self):
+    #
+    #     for argumento in self.argsList:
+    #         argumento.Analisissemantico
+
+
 
 class AssignStatement(AST):
     _fields = ['ID', 'expression']
+
+    def Analisissemantico(self):
+        m=get_symbol(self.ID.value)
+        if not m:
+                    print("Error no existe la variable %s en la linea %s"% (self.ID.value,str(self.ID.lineno)))
+        else:
+            self.expression.Analisissemantico()
+            if (m.type==self.expression.type):
+                pass
+            else:
+                if not(self.expression.type == None):
+                    print("Error en la asignacion de %s en la linea %s , %s es de tipo %s y se le esta asignando un valor del tipo %s" % (m.name,str(self.ID.lineno),m.name,m.type,self.expression.type))
 
 
 
 class AssignVecStatement(AST):
     _fields = ['ID','posexpreori', 'expression']
 
-class exprStatement(AST):
-    _fields = ['expression']
+    def Analisissemantico(self):
+        m=get_symbol(self.ID.value)
+        if not m:
+                    print("Error no existe la variable %s en la linea %s"% (self.ID.value,str(self.ID.lineno)))
+        else:
+            self.expression.Analisissemantico()
+            self.posexpreori.Analisissemantico()
+            if (m.type==self.expression.type):
+                if self.posexpreori.type != int:
+                    print("Error en el indice de la variable %s en la linea %s los indices deben ser enteros"% (m.name,str(self.ID.lineno)))
+            else:
+                if not(self.expression.type == None):
+                    print("Error en la asignacion de %s en la linea %s , %s es de tipo %s y se le esta asignando un valor del tipo %s" % (m.name,str(self.ID.lineno),m.name,m.type,self.expression.type))
+
 
 class printStatement(AST):
     _fields = ['STRING']
@@ -243,21 +431,59 @@ class printStatement(AST):
 class ReadStatement(AST):
     _fields = ['ID']
 
+    def Analisissemantico(self):
+        m=get_symbol(self.ID.value)
+
+        if not m:
+            print("Error no existe la variable %s en la linea %s"% (self.ID.value,str(self.ID.lineno)))
+
+
 class ReadStatementVect(AST):
     _fields = ['ID','posexpre']
+
+    def Analisissemantico(self):
+        m=get_symbol(self.ID.value)
+
+        if not m:
+            print("Error no existe la variable %s en la linea %s"% (self.ID.value,str(self.ID.lineno)))
+        elif type(self.posexpre)!= int:
+            print("Error en el indice de la variable %s en la linea %s"% (m.name,str(m.lineno)))
+
+
+
 
 class WriteStatement(AST):
     _fields = ['expression']
 
+
 class BeginEndStatement(AST):
     _fields = ['statements']
 
+    def Analisissemantico(self):
+        self.statements.Analisissemantico()
+
+
+
 class Defvar(AST):
-    _fields = ['ID', 'value', 'tipo', 'valor']
+    type = None
+    _fields = ['ID', 'tipo', 'valor']
+
+    def Analisissemantico(self):
+        attach_symbol(self.ID, eval(self.tipo))
+        if self.valor:
+            self.valor.Analisissemantico()
+            if self.valor.type != int:
+                print("Error de tipo para la asignacion de tamaño en la linea %s" % (self.ID.lineno))
+        self.type = eval((self.tipo))
+
 
 
 class IfStatement(AST):
     _fields = ['condition', 'then_b']
+
+    def Analisissemantico(self):
+        self.condition.Analisissemantico()
+        self.then_b.Analisissemantico()
 
 class BreakStatement(AST):
     _fields = ['breaky']
@@ -268,40 +494,105 @@ class SkipStatement(AST):
 class IfelseStatement(AST):
     _fields = ['condition', 'then_b','else_b']
 
+    def Analisissemantico(self):
+        self.condition.Analisissemantico()
+        self.then_b.Analisissemantico()
+        self.else_b.Analisissemantico()
+
 class WhileStatement(AST):
     _fields = ['logica','statements']
 
-class ReturnStatement(AST):
-    _fields = ['expression']
+    def Analisissemantico(self):
+        self.logica.Analisissemantico()
+        self.statements.Analisissemantico()
 
-class signexpression(AST):
-    _fields = ['op', 'expression']
+class ReturnStatement(AST): #asd
+    _fields = ['expression','token']
+    type=None
+
+    def Analisissemantico(self):
+        nombre  = "%return"
+        self.expression.Analisissemantico()
+        self.type=self.expression.type
+        m= get_symbol(nombre)
+        self.token.value = nombre
+        if not m:
+            attach_symbol(self.token,self.type)
+        elif m.type != self.type:
+            print("Conflicto de tipos con del return en la linea %s"%(repr(self.token.lineno)))
 
 class Expression(AST):
     _fields = ['op', 'left', 'right']
+    type=None
+
+    def Analisissemantico(self):
+        self.left.Analisissemantico()
+        self.right.Analisissemantico()
+        if self.left.type==self.right.type:
+            self.type=self.left.type
+        else:
+            print("Error en la expresion : %s %s %s involucra diferentes tipos de variable."% (self.left,self.op,self.right))
+            
 
 class UnariExpression(AST):
     _fields = ['op','right']
+    type=None
+
+    def Analisissemantico(self):
+        self.right.Analisissemantico()
+        self.type=self.right.type
 
 class CastExpression(AST):
     _fields = ['tipo','right']
+    type=None
+
+    def Analisissemantico(self):
+        #m=get_symbol(self.right)
+        self.right.Analisissemantico()
+        self.right.type=eval(self.tipo)
+        self.type=self.right.type
+        #m.type=eval(self.tipo)
+        #set_symbol(m.name)
+
 
 class RelationalOp(AST):
     _fields = ['op', 'left', 'right']
+
+    def Analisissemantico(self):
+        self.left.Analisissemantico()
+        self.right.Analisissemantico()
+        if(self.left.type!=self.right.type):
+            print("Error de tipos en la expresion logica %s %s %s" % (self.left,self.op,self.right))
 
 
 class logicaOp(AST):
     _fields = ['op', 'left', 'right']
 
 
-class FunCall(AST):
+    def Analisissemantico(self):
+        self.left.Analisissemantico()
+        self.right.Analisissemantico()
+
+
+class FunCall(AST): # asd
+    type = None
     _fields = ['ID', 'args']
 
-# class ExprList(AST):
-#     _fields = ['expressions']
-#
-#     def append(self, e):
-#         self.expressions.append(e)
+    def Analisissemantico(self):
+        m=get_symbol(self.ID.value)
+        if not m:
+            print("Error no existe la funcion %s en la linea %s"% (self.ID.value,str(self.ID.lineno)))
+        elif len(m.params) != len(self.args.argsList):
+            print("Faltan parametros en la funcion %s de la linea %s" % (m.name,m.lineno))
+        else :
+            i = 0
+            for arg in self.args.argsList:
+                arg.Analisissemantico()
+                if arg.type != m.params[i].type:
+                    print("Error de tipos en laen el llamado de la funcion  %s %s en la linea %s" % (self.ID.value, arg , self.ID.lineno))
+                i +=1
+            self.type = m.type
+            print m.type
 
 
 

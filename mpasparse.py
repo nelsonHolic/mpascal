@@ -5,7 +5,7 @@ __authors__ = 'noescobar,rass,anagui'
 import ply.yacc as yacc
 from mpaslex import *
 from mpasast import *
-
+from symtab import *
 
 globalErrorSintactico = {'error' : False}
 
@@ -57,7 +57,7 @@ def p_funname(p):
     '''
     funname :  ID
     '''
-    p[0] = p[1]
+    p[0] = p.slice[1]
 
 def p_funcion(p):
     '''
@@ -248,7 +248,7 @@ def p_statement_RETURN(p):
     '''
     statement : RETURN expression
     '''
-    p[0]= ReturnStatement(expression=p[2])
+    p[0]= ReturnStatement(expression=p[2], token = p.slice[1])
 
 def p_statement_PRINT(p):
     '''
@@ -314,7 +314,7 @@ def p_statement_READ(p):
     '''
     statement : READ '(' ID ')'
     '''
-    p[0] = ReadStatement(ID = p[3])
+    p[0] = ReadStatement(ID = p.slice[3])
 
 def p_statement_READ_RPAREN_Error(p):
     '''
@@ -357,7 +357,7 @@ def p_statement_READ_vect(p):
     '''
     statement : READ '(' ID '[' expression ']' ')'
     '''
-    p[0] = ReadStatementVect(ID = p[3], posexpre = p[5])
+    p[0] = ReadStatementVect(ID = p.slice[3], posexpre = p[5])
 
 
 
@@ -485,7 +485,7 @@ def p_locals_funrecur_error(p):
     '''
     global globalErrorSintactico
     if not globalErrorLex['error'] :
-        print(bcolors.FAIL+"\t No se a encontrado ningun ';', antes del "+p[2].value+bcolors.ENDC)
+        print(bcolors.FAIL+"\t No se a encontrado ningun ';', antes del "+p[3].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
     
 
@@ -616,13 +616,13 @@ def p_valor_ID(p):
     '''
     valor : ID
     '''
-    p[0]=Variable(ID=p[1],valor=None)
+    p[0]=Variable(ID= p.slice[1],valor=None)
 
 def p_valor_ID_vect(p):
     '''
     valor : ID '[' expression ']'
     '''
-    p[0]=Variable(ID=p[1],valor=p[3])
+    p[0]=Variable(ID=p.slice[1],valor=p[3])
 
 def p_valor_ID_vect_Error(p):
     '''
@@ -636,19 +636,19 @@ def p_valor_NINT(p):
     '''
     valor : NINT
     '''
-    p[0]=Entero(INT=p[1])
+    p[0]=Entero(INT=p.slice[1])
 
 def p_valor_NFLOAT(p) :
     '''
     valor : NFLOAT
     '''
-    p[0]=Float(FLOAT=p[1])
+    p[0]=Float(FLOAT=p.slice[1])
 
 def p_defvar_id(p):
     '''
     defvar :  ID ':'  tipo
     '''
-    p[0]= Defvar(ID = p[1], tipo = p[3], value = None, valor=None)
+    p[0]= Defvar(ID = p.slice[1], tipo = p[3], valor=None)
 
 def p_defvar_id_tipo_error(p):
     '''
@@ -663,7 +663,7 @@ def p_defvar_vect(p):
     '''
     defvar : ID ':' tipo '[' valor ']'
     '''
-    p[0] = Defvar(ID = p[1], tipo= p[3], valor = p[5], value = None)
+    p[0] = Defvar(ID = p.slice[1], tipo= p[3], valor = p[5])
 
 def p_tipo_INT(p):
     '''
@@ -709,7 +709,7 @@ def p_assign_val(p):
     '''
     assign :  ID ASIGSIM expression
     '''
-    p[0]=AssignStatement(ID=p[1],expression=p[3])
+    p[0]=AssignStatement(ID=p.slice[1],expression=p[3])
 
 
 def p_assign_val_error(p):
@@ -727,7 +727,7 @@ def p_assign_vec(p):
     '''
     assign : ID '[' expression ']' ASIGSIM expression
     '''
-    p[0] = AssignVecStatement(ID = p[0], posexpreori = p[3], expression = p[6])
+    p[0] = AssignVecStatement(ID = p.slice[1], posexpreori = p[3], expression = p[6])
 
 def p_assign_vec_RBRAKECT_error(p):
     '''
@@ -962,6 +962,15 @@ if __name__ == '__main__':
         except KeyboardInterrupt:
             print('escritura del arbol cancelada... saliendo')
         outFile.close()
+        #try:
+        #    print(bcolors.FAIL)
+        ast.Analisissemantico()
+
+        #    print(bcolors.ENDC)
+        # except Exception:
+        #     print(bcolors.ENDC)
+        #     print(Exception)
+
     else:
         ast = None
 
