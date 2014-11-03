@@ -1,20 +1,29 @@
 
-fun alternativa(t:int,a:int)
+fun rere(t:int,B:int)
     B: float;
     fun asd(A:int)
         x: int;
         begin
-            return 23
+            return int(23.34)
         end;
     begin
         if(23 <= 34) then
+        begin
             B := 23.1;
+            return 23
+        end;
         t:=x[3];
-        return B
+        return asd(42)
+    end
+
+fun rere(t:int,m:int)
+    B: float;
+    begin
+        return asd(float(42))
     end
 
 
-fun pruExpression(t:int)
+fun main(t:int)
     A: float;
 
     begin
@@ -23,5 +32,5 @@ fun pruExpression(t:int)
             t:=(3+5)
         end;
         a:=x[3];
-        t[4]:= asd(12)
+        t[4]:= alternativa(23,12)
     end

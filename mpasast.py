@@ -11,8 +11,14 @@ nodos AST pueden ser encontrados al comienzo del archivo.  Usted deberá
 añadir más.
 '''
 
+'''
+To do :
+Falta corregir los mensajes de error
+Falta chequear que no se redefina una variable/parametro en una funcion de locals # pregunta a eingel
+Falta nose
+'''
+
 import sys
-#from symtab import *
 from ply.lex import LexToken
 
 class bcolorsAST:
@@ -294,10 +300,14 @@ class Program(AST):
     def Analisissemantico(self):
         global _scope
         global current
+        current=new_scope()
         for func in self.funlist:
-            current=new_scope()
             func.Analisissemantico()
-            current=pop_scope()
+
+        m=get_symbol("main")
+        if not m:
+            print(" Error : funcion main no definida.")
+
 
 
 
@@ -323,10 +333,11 @@ class Funcion(AST): # <----------------------
         global _scope
         attach_symbol(self.ID,None)
         m = get_symbol(self.ID.value)
-        current=new_scope()
+        new_scope()
         if self.parameters:
             self.parameters.Analisissemantico()
             m.params= self.parameters.param_decls
+            set_symbol(m)
         if self.locals:
             self.locals.Analisissemantico()
         self.statements.Analisissemantico()
@@ -335,6 +346,8 @@ class Funcion(AST): # <----------------------
             a = get_symbol(self.ID.value)
             self.type  = m.type
             a.type = self.type
+        pop_scope()
+
 
 
 @validate_fields(param_decls=list)
@@ -531,14 +544,15 @@ class UnariExpression(AST):
 
 class CastExpression(AST):
     _fields = ['tipo','right']
+    type=None
 
     def Analisissemantico(self):
-        m=get_symbol(self.right)
-        if not m:
-            print("Error no existe la variable %s en la linea %s"% (self.ID.value,str(self.ID.lineno)))
-        else :
-            m.type=eval(self.tipo)
-            set_symbol(m.name)
+        #m=get_symbol(self.right)
+        self.right.Analisissemantico()
+        self.right.type=eval(self.tipo)
+        self.type=self.right.type
+        #m.type=eval(self.tipo)
+        #set_symbol(m.name)
 
 
 class RelationalOp(AST):
