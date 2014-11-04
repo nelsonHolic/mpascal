@@ -12,10 +12,12 @@ añadir más.
 '''
 
 '''
+En el codigo estan los comentarios de donde va que cosa.
 To do :
-Falta corregir los mensajes de error
-Falta chequear que no se redefina una variable/parametro en una funcion de locals # pregunta a eingel
-Falta nose
+Falta corregir los mensajes de error , practicamente TODOS sobre todo el lineno.
+Falta chequear que no se redefina una variable/parametro en una funcion de locals # pregunta a eingel.
+Falta chequeo de que es un vector por lo que se debe acceder a el en manera de vector o visceversa.
+Falta propagar el resultado de las expresiones aritmeticas para que sea mas sencillo hacer algunas cosas en esta entrega y en posteriores.
 '''
 
 import sys
@@ -433,7 +435,6 @@ class ReadStatement(AST):
 
     def Analisissemantico(self):
         m=get_symbol(self.ID.value)
-
         if not m:
             print("Error no existe la variable %s en la linea %s"% (self.ID.value,str(self.ID.lineno)))
 
@@ -468,7 +469,7 @@ class Defvar(AST):
     type = None
     _fields = ['ID', 'tipo', 'valor']
 
-    def Analisissemantico(self):
+    def Analisissemantico(self): # Tenemos que coger valor y evaluarlo para guardarlo en la tabla de simbolos, asi podemos chequear que una variable es un vector y en otra etapa ver si se sale del rango con una asignacion
         attach_symbol(self.ID, eval(self.tipo))
         if self.valor:
             self.valor.Analisissemantico()
@@ -506,7 +507,7 @@ class WhileStatement(AST):
         self.logica.Analisissemantico()
         self.statements.Analisissemantico()
 
-class ReturnStatement(AST): #asd
+class ReturnStatement(AST): # Creamos simbolo falso %return para chequeo de tipos de return . Dado que es un ID invalido no tiene problema con sobreescritura
     _fields = ['expression','token']
     type=None
 
@@ -521,7 +522,7 @@ class ReturnStatement(AST): #asd
         elif m.type != self.type:
             print("Conflicto de tipos con del return en la linea %s"%(repr(self.token.lineno)))
 
-class Expression(AST):
+class Expression(AST):  # seria mejor propagar el resultado de una vez , ADEMAS serviria para dar los valores en el error y no solo que diga entero + float
     _fields = ['op', 'left', 'right']
     type=None
 
@@ -531,7 +532,7 @@ class Expression(AST):
         if self.left.type==self.right.type:
             self.type=self.left.type
         else:
-            print("Error en la expresion : %s %s %s involucra diferentes tipos de variable."% (self.left,self.op,self.right))
+            print("Error en la expresion : %s %s %s involucra diferentes tipos de variable."% (self.left,self.op,self.right)) # falta imprimir la linea
             
 
 class UnariExpression(AST):
@@ -551,8 +552,6 @@ class CastExpression(AST):
         self.right.Analisissemantico()
         self.right.type=eval(self.tipo)
         self.type=self.right.type
-        #m.type=eval(self.tipo)
-        #set_symbol(m.name)
 
 
 class RelationalOp(AST):
@@ -562,7 +561,7 @@ class RelationalOp(AST):
         self.left.Analisissemantico()
         self.right.Analisissemantico()
         if(self.left.type!=self.right.type):
-            print("Error de tipos en la expresion logica %s %s %s" % (self.left,self.op,self.right))
+            print("Error de tipos en la expresion logica %s %s %s en la linea %s" % (self.left,self.op,self.right,str(0))  # falta agregar la linea
 
 
 class logicaOp(AST):
@@ -592,7 +591,6 @@ class FunCall(AST): # asd
                     print("Error de tipos en laen el llamado de la funcion  %s %s en la linea %s" % (self.ID.value, arg , self.ID.lineno))
                 i +=1
             self.type = m.type
-            print m.type
 
 
 
