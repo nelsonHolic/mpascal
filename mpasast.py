@@ -15,7 +15,7 @@ añadir más.
 To do :
 Falta corregir los mensajes de error
 Falta chequear que no se redefina una variable/parametro en una funcion de locals # pregunta a eingel
-Falta nose
+Falta nosee
 '''
 
 import sys
