@@ -661,9 +661,9 @@ def p_defvar_id_tipo_error(p):
 
 def p_defvar_vect(p):
     '''
-    defvar : ID ':' tipo '[' valor ']'
+    defvar : ID ':' tipo '[' NINT ']'
     '''
-    p[0] = Defvar(ID = p.slice[1], tipo= p[3], valor = p[5])
+    p[0] = Defvar(ID = p.slice[1], tipo= p[3], valor = p.slice[5])
 
 def p_tipo_INT(p):
     '''

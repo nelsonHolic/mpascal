@@ -1,13 +1,13 @@
 
-fun rere(t:int,p:int)
+fun rere(t:int,B:int)
     B: float;
     fun asd(A:int)
-        B: int;
+        x: int;
         begin
             return int(23.34)
         end;
     begin
-        if(23.2 <= 34) then
+        if(23 <= 34) then
         begin
             B := 23.1;
             return 23
@@ -16,21 +16,21 @@ fun rere(t:int,p:int)
         return asd(42)
     end
 
-fun lol(t:int,m:int)
+fun rere(t:int,m:int)
     B: float;
     begin
-        return lol(13,int(3.2))
+        return float(42)
     end
 
 
-fun main(t:int)
+fun main()
     A: float;
-
+    d:int[5];
     begin
-        while (3<5) and (A == 34) do
+        while (3<5) and (A == 34+5) do
         begin
-            t:=(3+5)
+            d:=alternativa(32)
         end;
         a:=x[3];
-        t[4]:= rere(23,12)
+        d:=42
     end
