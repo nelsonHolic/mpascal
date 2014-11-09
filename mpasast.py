@@ -14,10 +14,9 @@ añadir más.
 '''
 To do :
 Falta corregir los mensajes de error # varios
-Falta chequear que en ambas partes del if no haya un break
-Falta corregir los parametros que son vectores // errores raros
-Falta corregir todo lo de void (write, fun , etc)
-Falta ver eso de fun() :int|float que esta muy raro
+falta agregar error despues del error de asignacion a un array
+Falta corregir todo lo de void (write, fun , etc) <------ NPI
+read(a)        /* Can't read into an array */
 Falta ver algunos errores extraños como que diga que una variable es y no es un vector a la vez.
 Falta revisar lo de los indices negativos.
 '''
@@ -185,7 +184,7 @@ class Entero(AST):
     _fields = ['INT']
 
     def __repr__(self):
-        print self.INT.value
+        return self.INT.value
 
 
 
@@ -195,7 +194,7 @@ class Float(AST):
     _fields = ['FLOAT']
 
     def __repr__(self):
-        print self.FLOAT.value
+        return self.FLOAT.value
 
 class Variable(AST):
 
@@ -210,8 +209,11 @@ class Variable(AST):
         else:
             if self.valor and not bandera :
                 self.valor.Analisissemantico()
-                if self.valor.type != type (7):
-                    print("Error en la linea %s : La variable %s es un vector y su indice debe ser entero." % (self.ID.lineno,self.ID.value))
+                if self.valor.type != int:
+                    if n.indice:
+                        print("Error en la linea %s : La variable %s es un vector y su indice debe ser entero." % (self.ID.lineno,self.ID.value))
+                    else:
+                        print("Error en la linea %s : El indice de los vectores debe de ser entero." % (self.ID.lineno))
             if(not bandera):
                 if n.indice and self.valor :
                     self.type=n.type
@@ -222,8 +224,8 @@ class Variable(AST):
             self.type=n.type
             self.indice=self.valor
 
-        def __repr__(self):
-            print self.ID.value
+    def __repr__(self):
+        return self.ID.value
 
 
 @validate_fields(funlist=list)
@@ -536,40 +538,47 @@ class FunCall(AST): # Falta chequear que si es un array el argumento, se mire si
         if not m:
             print("Error en la linea %s : La funcion %s no existe"% (self.ID.lineno,self.ID.value))
         elif m.name!="main":
-            if m.params or m.params==0 : #what the fuck
+            if m.params or m.params==0:
                 if m.params==0 :
-                    if self.args :
+                    if self.args:
                         print("Error en la linea %s : La funcion %s no requiere argumentos." % (self.ID.lineno,self.ID.value))
                     else:
                         self.type = m.type
                 else :
-                    if self.args :
+                    if self.args:
                         if len(m.params) > len(self.args.argsList):
                                 print("Error en la linea %s : Faltan parametros en el llamado a la funcion %s, se esperaban %s parametros."% (self.ID.lineno,self.ID.value,len(m.params)))
                         elif len(m.params) < len(self.args.argsList):
                                 print("Error en la linea %s : Sobran parametros en el llamado a la funcion %s, se esperaban %s parametros."% (self.ID.lineno,self.ID.value,len(m.params)))
-                        else : # Desde aca muto
+                        else : # Desde aca muto el numero de parametros es igual
                             i = 0
                             for arg in self.args.argsList:
 
-                                if not m.params[i].valor : # Si no es un vector el parametro
+                                if not m.params[i].valor: # Si no es un vector el parametro
                                     arg.Analisissemantico()
                                     if arg.type != m.params[i].type: # si los tipos son diferentes error
-                                            print("3Error en la linea %s : Los tipos en el llamado de la funcion  %s no son correctos.En el argumento %s se esperaba un %s y se ingreso un %s. " % (self.ID.lineno,self.ID.value,str(i+1),m.params[i].type,arg.type ))
+                                            print("3.Error en la linea %s : Los tipos en el llamado de la funcion  %s no son correctos.En el argumento %s se esperaba un %s y se ingreso un %s. " % (self.ID.lineno,self.ID.value,str(i+1),m.params[i].type,arg.type ))
+
+                                elif m.params[i].valor and arg.valor:
+                                    arg.Analisissemantico()
+                                    print("Error en la linea %s : En la funcion %s en el argumento %s se espera un vector y se le ingreso un valor" % (self.ID.lineno,str(i+1),arg.ID.value))
                                 else : # Si es un vector el parametro
-                                    if self.args.argsList[i].valor : # si se le engresa una posicion
+                                    if arg.valor: # si se le engresa una posicion
                                         arg.Analisissemantico()
                                         if arg.type != m.params[i].type:
                                             print("1.Error en la linea %s : Los tipos en el llamado de la funcion  %s no son correctos.En el argumento %s se esperaba un %s y se ingreso un %s. " % (self.ID.lineno,self.ID.value,str(i+1),m.params[i].type,arg.type ))
                                     else:   # si no se le ingresa posicion
-
                                         arg.Analisissemantico(1)
                                         l=get_symbol(arg.ID.value) # Buscamos el argumento como variable
-                                        if l.indice.value != m.params[i].valor.value : # si los indices del parametro y del vector ingresado son diferentes
-                                            print ("2.Error en la linea %s : En la funcion %s el argumento %s ( %s ) es un vector de %s y se esperaba un vector de %s " % (self.ID.lineno,self.ID.value,str(i+1),arg.ID.value,l.indice.value,m.params[i].valor.value ))
-                                        elif arg.type != m.params[i].type : # si los indices son iguales pero los tipos son diferentes
-                                            print("3.Error en la linea %s : Los tipos en el llamado de la funcion  %s no son correctos. En el argumento %s (%s) se esperaba un %s y se ingreso un %s. " % (self.ID.lineno,self.ID.value,str(i+1),arg.ID.value,m.params[i].type,arg.type ))
-                            i +=1
+                                        if l:
+                                            if l.indice:
+                                                if l.indice.value != m.params[i].valor.value : # si los indices del parametro y del vector ingresado son diferentes
+                                                    print ("2.Error en la linea %s : En la funcion %s el argumento %s ( %s ) es un vector de %s y se esperaba un vector de %s " % (self.ID.lineno,self.ID.value,str(i+1),arg.ID.value,l.indice.value,m.params[i].valor.value ))
+                                                elif arg.type != m.params[i].type : # si los indices son iguales pero los tipos son diferentes
+                                                    print("3.Error en la linea %s : Los tipos en el llamado de la funcion  %s no son correctos. En el argumento %s (%s) se esperaba un %s y se ingreso un %s. " % (self.ID.lineno,self.ID.value,str(i+1),arg.ID.value,m.params[i].type,arg.type ))
+                                            else:
+                                                    print("error en la linea %s: la variable %s no es un")
+                                i +=1
                     else :
                         print("Error en la linea %s : Faltan parametros en el llamado a la funcion %s, se esperaban %s parametros."% (self.ID.lineno,self.ID.value,len(m.params)))
 

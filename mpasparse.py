@@ -585,37 +585,37 @@ def p_logica_relacion_GREATER(p):
     '''
     relacion : expression GT expression
     '''
-    p[0] = RelationalOp(left = p[1], op = p[2], right = p[3])
+    p[0] = RelationalOp(left = p[1], op = p.slice[2], right = p[3])
 
 def p_logica_relacion_EQUAL(p):
     '''
     relacion : expression EQ expression
     '''
-    p[0] = RelationalOp(left = p[1], op = p[2], right = p[3])
+    p[0] = RelationalOp(left = p[1], op = p.slice[2], right = p[3])
 
 def p_logica_relacion_LESS(p):
     '''
     relacion : expression LT expression
     '''
-    p[0] = RelationalOp(left = p[1], op = p[2], right = p[3])
+    p[0] = RelationalOp(left = p[1], op = p.slice[2], right = p[3])
 
 def p_logica_relacion_DIFERENT(p):
     '''
     relacion : expression DI expression
     '''
-    p[0] = RelationalOp(left = p[1], op = p[2], right = p[3])
+    p[0] = RelationalOp(left = p[1], op = p.slice[2], right = p[3])
 
 def p_logica_relacion_GEQUAL(p):
     '''
     relacion : expression GE expression
     '''
-    p[0] = RelationalOp(left = p[1], op = p[2], right = p[3])
+    p[0] = RelationalOp(left = p[1], op = p.slice[2], right = p[3])
 
 def p_logica_relacion_LEQUAL(p):
     '''
     relacion : expression LE expression
     '''
-    p[0] = RelationalOp(left = p[1], op = p[2], right = p[3])
+    p[0] = RelationalOp(left = p[1], op = p.slice[2], right = p[3])
 
 
 def p_valor_ID(p):
@@ -969,7 +969,9 @@ if __name__ == '__main__':
         except KeyboardInterrupt:
             print('escritura del arbol cancelada... saliendo')
         outFile.close()
+        print(bcolors.FAIL)
         x=ast.Analisissemantico()
+        print(bcolors.ENDC)
 
     else:
         ast = None
