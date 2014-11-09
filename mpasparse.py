@@ -282,7 +282,7 @@ def p_statement_WRITE(p):
     '''
     statement : WRITE '(' expression ')'
     '''
-    p[0]= WriteStatement(expression=p[3])
+    p[0]= WriteStatement(expression=p[3], token = p.slice[1])
 
 def p_statement_WRITE_RPAREN_error(p):
     '''
@@ -532,7 +532,7 @@ def p_logica_simple(p):
     logica : logica OR logica
     logica : logica AND logica
     '''
-    p[0]=logicaOp(op=p[2],left=p[1],right=p[3])
+    p[0]=logicaOp(op=p.slice[2],left=p[1],right=p[3])
 
 
 def p_logica_op_error(p):
@@ -550,7 +550,7 @@ def p_logica_simple_not(p):
     '''
     logica : NOT logica
     '''
-    p[0]=logicaOp(op=p[1],left=None,right=p[2])
+    p[0]=logicaOp(op=p.slice[1],left=None,right=p[2])
 
 def p_logica_complex(p):
     '''

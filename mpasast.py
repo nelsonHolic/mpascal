@@ -17,6 +17,8 @@ Falta corregir los mensajes de error # varios
 falta agregar error despues del error de asignacion a un array
 Falta corregir todo lo de void (write, fun , etc) <------ NPI
 read(a)        /* Can't read into an array */
+if a > 1 then return bogus_nested(a) * bogus_fact(a - 1); /* okay: float * float */
+else if bar(n) > float(0) then
 Falta ver algunos errores extraños como que diga que una variable es y no es un vector a la vez.
 Falta revisar lo de los indices negativos.
 '''
@@ -404,10 +406,12 @@ class ReadStatementVect(AST):
 
 
 class WriteStatement(AST):
-    _fields = ['expression']
+    _fields = ['expression','token']
 
     def Analisissemantico(self):
         self.expression.Analisissemantico()
+        if self.expression.type != int or self.expression.type != float:
+            print("Error en la linea %s : write solo acepta tipo INT o FLOAT"%(self.token.lineno))
 
 
 class BeginEndStatement(AST):
@@ -485,7 +489,10 @@ class Expression(AST):
             self.type=self.left.type
         else:
             print("Error en la linea %s : La expresion  %s %s %s involucra diferentes tipos de datos."% (self.op.lineno,self.left,self.op.value,self.right))
-            
+
+    def __repr__(self):
+        return str(self.left)+str(self.op.value)+str(self.right)
+
 
 class UnariExpression(AST):
     _fields = ['op','right']
@@ -495,6 +502,9 @@ class UnariExpression(AST):
         self.right.Analisissemantico()
         self.type=self.right.type
 
+    def __repr__(self):
+            return str(self.op.value)+str(self.right)
+
 class CastExpression(AST):
     _fields = ['tipo','right']
     type=None
@@ -503,6 +513,9 @@ class CastExpression(AST):
         self.right.Analisissemantico()
         self.right.type=eval(self.tipo)
         self.type=self.right.type
+
+    def __repr__(self):
+            return str(self.tipo)+"("+str(self.right)+")"
 
 
 
@@ -514,9 +527,12 @@ class RelationalOp(AST):
         self.left.Analisissemantico()
         self.right.Analisissemantico()
         if(self.left.type!=self.right.type):
-            print("Error en la linea %s de tipos en la expresion logica %s %s %s" % (self.op.lineno,self.left,self.op.value,self.right))
+            print("Error en la linea %s : de tipos en la expresion logica %s %s %s involucra diferentes tipos de datos" % (self.op.lineno,self.left,self.op.value,self.right))
         else :
             self.type=type(True)
+
+    def __repr__(self):
+            return str(self.left)+str(self.op.value)+str(self.right)
 
 
 class logicaOp(AST):
@@ -527,6 +543,9 @@ class logicaOp(AST):
         self.left.Analisissemantico()
         self.right.Analisissemantico()
         self.type=type(True)
+
+    def __repr__(self):
+            return str(self.left)+str(self.op.value)+str(self.right)
 
 
 class FunCall(AST): # Falta chequear que si es un array el argumento, se mire si tienen el mismo indice, god save us
