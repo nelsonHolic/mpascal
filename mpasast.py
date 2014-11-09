@@ -13,12 +13,15 @@ añadir más.
 
 '''
 To do :
-Falta corregir los mensajes de error
-Falta chequear que no se redefina una variable/parametro en una funcion de locals # pregunta a eingel
-Falta nosee
+Falta corregir los mensajes de error # varios
+Falta chequear que no se redefina una variable/parametro en una funcion de locals # pregunta a eingel # solved
+Falta corregir lo de los vectores de nuevo
+Falta corregir con los parametros vacios
+Falta
 '''
 
 import sys
+from symtab import *#current,_scope
 from ply.lex import LexToken
 
 class bcolorsAST:
@@ -30,86 +33,6 @@ class bcolorsAST:
     ENDC = '\033[0m'
 
 
-
-
-_scope=[]
-current=None
-
-class Errorsemantico(Exception):
-
-    def __init__(self, valor,lineno): # real signature unknown
-        self.valor=valor
-        self.lineno = lineno
-
-    def __str__(self):
-        lineno = ""
-        if(self.lineno):
-            lineno = self.lineno
-        return repr(self.valor)+repr(lineno)
-
-
-
-class Symbol(): #att : name scope level
-    paramnum=None
-    def __init__(self,name,scope,type,lineno):
-        self.name=name
-        self.scope=scope
-        self.type=type
-        self.lineno=lineno
-
-    def changetype(self,type):
-        self.type=type
-
-
-def new_scope():# crea una nueva tabla de simbolos || usar cada vez que entra a una funcion
-    global current
-    global _scope
-    current={}
-    #print _scope
-    _scope.append(current)
-    return current
-
-def pop_scope(): # cada que se sale de una funcion
-    global current
-    global _scope
-    r=_scope.pop()
-    current=_scope[-1]
-    return r
-
-def get_symbol(name,level=0,attr=None):
-    global _scope
-    for i in range(len(_scope)-(level+1),-1,-1):
-        s=_scope[i]
-        try:
-            sym=s[name]
-            # if attr:
-            #     if hasattr(sym,attr):
-            #         return sym
-            #     else :
-            return sym
-        except KeyError :
-            pass
-    return None
-
-def add_symbol(name,type,lineno):
-    global current
-    s=Symbol(name=name,scope=current,type=type,lineno=lineno)
-    current[name]=s
-    #print current
-    return s
-
-def set_symbol(s):
-    global current
-    current[s.name]=s # ingresamos a current[print]=print
-
-def attach_symbol(t,type):
-    global current
-    s=current.get(t.value)
-    if not s:
-        s=add_symbol(t.value,type,t.lexer.lineno)
-    else:
-        print("Redefinicion de %s" % t.value)
-    t.symtab=s
 
 
 
@@ -251,43 +174,44 @@ def validate_fields(**fields):
 # del apropiado _fields = [] que indique que campos deben ser almacenados.
 # A modo de ejemplo, para un operador binario es posible almacenar el
 # operador, la expresión izquierda y derecha, como esto:
-#
-#    class Binop(AST):
-#        _fields = ['op','left','right']
-# ----------------------------------------------------------------------
 
-# Unos pocos nodos ejemplos
+
 
 class Entero(AST):
-    '''
-    Un valor constante como 2, 2.5, o "dos"
-    '''
+
     type=int
     _fields = ['INT']
 
 
 
 class Float(AST):
-    '''
-    Un valor constante como 2, 2.5, o "dos"
-    '''
+
     type=float
     _fields = ['FLOAT']
 
 class Variable(AST):
-    '''
-    Un valor constante como 2, 2.5, o "dos"
-    '''
+
     type=None
     _fields = ['ID','valor']
+    indice=None
 
     def Analisissemantico(self):
         n=get_symbol(self.ID.value)
-        #print self.ID.value
         if not n:
-            print("Error no existe la variable %s en la linea %s"% (self.ID.value,str(self.ID.lineno)))
+            print("Error en la linea %s : No existe la variable %s "% (str(self.ID.lineno),self.ID.value))
         else:
+            if self.valor :
+                self.valor.Analisissemantico()
+                if self.valor.type != type (7):
+                    print("Error en la linea %s : La variable %s es un vector y su indice debe ser entero." % (self.ID.lineno,self.ID.value))
+            if n.indice and self.valor :
+                self.type=n.type
+            elif n.indice and not self.valor:
+                print ("Error en la linea %s : La variable %s es un vector y no se accede a ella como tal." % (self.ID.lineno,self.ID.value))
+            elif not n.indice and self.valor:
+                print ("Error en la linea %s : La variable %s no es un vector y se intenta acceder a ella como tal."%(self.ID.lineno,self.ID.value))
             self.type=n.type
+            self.indice=self.valor
 
 
 @validate_fields(funlist=list)
@@ -334,18 +258,27 @@ class Funcion(AST): # <----------------------
         attach_symbol(self.ID,None)
         m = get_symbol(self.ID.value)
         new_scope()
-        if self.parameters:
+        if self.parameters :
             self.parameters.Analisissemantico()
-            m.params= self.parameters.param_decls
+            m.params= self.parameters.param_decls # para saber el tipo de los parametros
             set_symbol(m)
+        elif self.parameters == None :
+            m.params=0 # Si no tiene parametros
+            set_symbol(m)
+
         if self.locals:
-            self.locals.Analisissemantico()
-        self.statements.Analisissemantico()
+            self.locals.Analisissemantico() # Analisis a cada local
+
+        self.statements.Analisissemantico() # Analisis a los statements
         m = get_symbol("%return")
         if m:
             a = get_symbol(self.ID.value)
             self.type  = m.type
             a.type = self.type
+        else :
+            a = get_symbol(self.ID.value)
+            self.type  = "void"
+            a.type = "void"
         pop_scope()
 
 
@@ -382,12 +315,6 @@ class Args(AST):
     def append(self, arg):
         self.argsList.append(arg)
 
-    #
-    # def Analisissemantico(self):
-    #
-    #     for argumento in self.argsList:
-    #         argumento.Analisissemantico
-
 
 
 class AssignStatement(AST):
@@ -396,18 +323,21 @@ class AssignStatement(AST):
     def Analisissemantico(self):
         m=get_symbol(self.ID.value)
         if not m:
-                    print("Error no existe la variable %s en la linea %s"% (self.ID.value,str(self.ID.lineno)))
+                    print("Error en la linea %s : No existe la variable %s "% (self.ID.lineno,self.ID.value))
         else:
-            self.expression.Analisissemantico()
-            if (m.type==self.expression.type):
-                pass
-            else:
-                if not(self.expression.type == None):
-                    print("Error en la asignacion de %s en la linea %s , %s es de tipo %s y se le esta asignando un valor del tipo %s" % (m.name,str(self.ID.lineno),m.name,m.type,self.expression.type))
+            if not m.indice :
+                self.expression.Analisissemantico()
+                if (m.type==self.expression.type):
+                    pass
+                else:
+                    if not(self.expression.type == None):
+                        print("Error en la asignacion de %s en la linea %s , %s es de tipo %s y se le esta asignando un valor del tipo %s" % (m.name,str(self.ID.lineno),m.name,m.type,self.expression.type))
+            else :
+                print("Error en la linea %s : La variable %s es un vector y no se accede a ella como tal" % (self.ID.lineno,self.ID.value)) # tiene indice y no
 
 
 
-class AssignVecStatement(AST):
+class AssignVecStatement(AST):# Indices negativos es un error
     _fields = ['ID','posexpreori', 'expression']
 
     def Analisissemantico(self):
@@ -415,14 +345,16 @@ class AssignVecStatement(AST):
         if not m:
                     print("Error no existe la variable %s en la linea %s"% (self.ID.value,str(self.ID.lineno)))
         else:
-            self.expression.Analisissemantico()
-            self.posexpreori.Analisissemantico()
-            if (m.type==self.expression.type):
-                if self.posexpreori.type != int:
-                    print("Error en el indice de la variable %s en la linea %s los indices deben ser enteros"% (m.name,str(self.ID.lineno)))
-            else:
-                if not(self.expression.type == None):
-                    print("Error en la asignacion de %s en la linea %s , %s es de tipo %s y se le esta asignando un valor del tipo %s" % (m.name,str(self.ID.lineno),m.name,m.type,self.expression.type))
+            if m.indice :
+                self.expression.Analisissemantico()
+                self.posexpreori.Analisissemantico()
+                if (m.type==self.expression.type ):
+                    if (self.posexpreori.type != type(7)) :
+                        print("Error en la linea %s : El indice de la variable %s al ser un vector debe ser entero"% (self.ID.lineno,m.name))
+                else:
+                        print("Error en la asignacion de %s en la linea %s , %s es de tipo %s y se le esta asignando un valor del tipo %s" % (m.name,str(self.ID.lineno),m.name,m.type,self.expression.type))
+            else :
+                print("Error en la linea %s : La variable %s no es un vector y se accede a ella como tal. " % (self.ID.lineno,self.ID.value)) # no tiene indice y si
 
 
 class printStatement(AST):
@@ -445,15 +377,18 @@ class ReadStatementVect(AST):
         m=get_symbol(self.ID.value)
 
         if not m:
-            print("Error no existe la variable %s en la linea %s"% (self.ID.value,str(self.ID.lineno)))
-        elif type(self.posexpre)!= int:
-            print("Error en el indice de la variable %s en la linea %s"% (m.name,str(m.lineno)))
-
+            print("Error en la linea %s : No existe la variable %s ."% (self.ID.lineno,self.ID.value))
+        elif self.posexpre :
+            if type(self.posexpre)!= int:
+                print("Error en la linea %s : El indice de la variable %s no es de tipo entero."% (self.ID.lineno,m.name))
 
 
 
 class WriteStatement(AST):
     _fields = ['expression']
+
+    def Analisissemantico(self): # Falta
+        pass
 
 
 class BeginEndStatement(AST):
@@ -469,12 +404,11 @@ class Defvar(AST):
     _fields = ['ID', 'tipo', 'valor']
 
     def Analisissemantico(self):
-        attach_symbol(self.ID, eval(self.tipo))
+        attach_symbol(self.ID, eval(self.tipo),self.valor)
         if self.valor:
-            self.valor.Analisissemantico()
-            if self.valor.type != int:
-                print("Error de tipo para la asignacion de tamaño en la linea %s" % (self.ID.lineno))
-        self.type = eval((self.tipo))
+            if type(eval(self.valor.value)) != type(7):
+                print("Error de tipo para la asignacion de tamano en la linea %s" % (self.ID.lineno))
+        self.type = eval(self.tipo)
 
 
 
@@ -506,7 +440,7 @@ class WhileStatement(AST):
         self.logica.Analisissemantico()
         self.statements.Analisissemantico()
 
-class ReturnStatement(AST): #asd
+class ReturnStatement(AST):
     _fields = ['expression','token']
     type=None
 
@@ -519,7 +453,7 @@ class ReturnStatement(AST): #asd
         if not m:
             attach_symbol(self.token,self.type)
         elif m.type != self.type:
-            print("Conflicto de tipos con del return en la linea %s"%(repr(self.token.lineno)))
+            print("Error en la linea %s : Conflicto de tipos con el tipo de dato que retorna la funcion." % (repr(self.token.lineno)))
 
 class Expression(AST):
     _fields = ['op', 'left', 'right']
@@ -531,7 +465,7 @@ class Expression(AST):
         if self.left.type==self.right.type:
             self.type=self.left.type
         else:
-            print("Error en la expresion : %s %s %s involucra diferentes tipos de variable."% (self.left,self.op,self.right))
+            print("Error en la linea FALTA : La expresion  %s %s %s involucra diferentes tipos de datos."% (self.left,self.op,self.right))
             
 
 class UnariExpression(AST):
@@ -547,58 +481,81 @@ class CastExpression(AST):
     type=None
 
     def Analisissemantico(self):
-        #m=get_symbol(self.right)
         self.right.Analisissemantico()
         self.right.type=eval(self.tipo)
         self.type=self.right.type
-        #m.type=eval(self.tipo)
-        #set_symbol(m.name)
+
 
 
 class RelationalOp(AST):
     _fields = ['op', 'left', 'right']
+    type = None
 
     def Analisissemantico(self):
         self.left.Analisissemantico()
         self.right.Analisissemantico()
         if(self.left.type!=self.right.type):
             print("Error de tipos en la expresion logica %s %s %s" % (self.left,self.op,self.right))
+        else :
+            self.type=type(True)
 
 
 class logicaOp(AST):
     _fields = ['op', 'left', 'right']
-
+    type=None
 
     def Analisissemantico(self):
         self.left.Analisissemantico()
         self.right.Analisissemantico()
+        self.type=type(True)
 
 
-class FunCall(AST): # asd
+class FunCall(AST): # Falta chequear que si es un array el argumento, se mire si tienen el mismo indice, god save us
     type = None
-    _fields = ['ID', 'args']
+    _fields =['ID', 'args']
 
     def Analisissemantico(self):
         m=get_symbol(self.ID.value)
         if not m:
             print("Error no existe la funcion %s en la linea %s"% (self.ID.value,str(self.ID.lineno)))
-        elif len(m.params) != len(self.args.argsList):
-            print("Faltan parametros en la funcion %s de la linea %s" % (m.name,m.lineno))
+        elif m.params or m.params==0 : #what the fuck
+            if m.params==0 :
+                if self.args :
+                    print("Error en la linea %s : La funcion %s no requiere argumentos." % (self.ID.lineno,self.ID.value))
+                else:
+                    self.type = m.type
+            else :
+                if self.args :
+                    if len(m.params) != len(self.args.argsList):
+                            print("Error en la linea %s : Faltan parametros en la funcion %s " % (self.ID.lineno,m.name))
+                    else :
+                        i = 0
+                        for arg in self.args.argsList:
+                            if not m.params[i].valor :
+                                arg.Analisissemantico()
+                                if arg.type != m.params[i].type:
+                                        print("3Error en la linea %s :Los tipos en el llamado de la funcion  %s no son correctos.En el argumento %s se esperaba un %s y se obtuvo un %s. " % (self.ID.lineno,self.ID.value,str(i+1),m.params[i].type,arg.type ))
+                            else :
+                                arg.Analisissemantico()
+                                if self.args.argsList :
+                                    if arg.type != m.params[i].type:
+                                        print("2Error en la linea %s :Los tipos en el llamado de la funcion  %s no son correctos.En el argumento %s se esperaba un %s y se obtuvo un %s. " % (self.ID.lineno,self.ID.value,str(i+1),m.params[i].type,arg.type ))
+
+                                else:
+                                    l=get_symbol(self.args.argsList[i].ID.value)
+                                    if i.indice != m.params[i].indice :
+                                        print ("lol %s %s %s %s %s %s " % (self.ID.lineno,self.ID.value,str(i+1),arg.ID.value,m.params[i].valor.value,arg.indice ))
+                                    elif arg.type != m.params[i].type :
+                                        print("1Error en la linea %s :Los tipos en el llamado de la funcion  %s no son correctos.En el argumento %s se esperaba un %s y se obtuvo un %s. " % (self.ID.lineno,self.ID.value,str(i+1),m.params[i].type,arg.type ))
+                        i +=1
+                else :
+                    print("Error en la linea %s : Faltan parametros en la funcion %s."% (self.ID.lineno,self.ID.value))
+
+                self.type = m.type
         else :
-            i = 0
-            for arg in self.args.argsList:
-                arg.Analisissemantico()
-                if arg.type != m.params[i].type:
-                    print("Error de tipos en laen el llamado de la funcion  %s %s en la linea %s" % (self.ID.value, arg , self.ID.lineno))
-                i +=1
-            self.type = m.type
-            print m.type
+            print("Error en la linea %s : La variable %s no es una funcion." % (self.ID.lineno, self.ID.value))
 
 
-
-# Usted deberá añadir mas nodos aquí.  Algunos nodos sugeridos son
-# BinaryOperator, UnaryOperator, ConstDeclaration, VarDeclaration, 
-# AssignmentStatement, etc...
 
 # ----------------------------------------------------------------------
 #                  NO MODIFIQUE NADA AQUI ABAJO

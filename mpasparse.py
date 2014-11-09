@@ -63,7 +63,7 @@ def p_funcion(p):
     '''
      fun : FUN funname  '(' ')' locals  BEGIN  statements END
     '''
-    p[0]=Funcion(ID=p[2],parameters=None, locals=p[5],statements=p[7])
+    p[0]=Funcion(ID=p[2], parameters=None , locals=p[5],statements=p[7])
 
 
 def p_funcion_end_Error(p):
@@ -128,7 +128,7 @@ def p_funcion_args_BEGIN_Error(p):
     '''
     global globalErrorSintactico
     if not globalErrorLex['error'] and not globalErrorSintactico['error']:
-            print(bcolors.FAIL+"\t No se ah encontrado ningun begin antes de "+p[7].value+bcolors.ENDC)
+            print(bcolors.FAIL+"\t No se ha encontrado ningun begin antes de "+p[7].value+bcolors.ENDC)
             globalErrorSintactico['error']=True
 
 
@@ -436,11 +436,17 @@ def p_statement_end_ERROR(p):
         globalErrorSintactico['error']=True
     
 
-def p_statement_expression(p):
+def p_statement_expression_fun(p):
     '''
-    statement : expression
+    statement : funname '(' args ')'
     '''
-    p[0] = p[1]
+    p[0] = FunCall(ID = p[1], args = p[3])
+
+def p_statement_expression_funnoargs(p):
+    '''
+    statement : funname '(' ')'
+    '''
+    p[0] = FunCall(ID = p[1], args = None)
 
 def p_statement_assign(p):
     '''
@@ -464,7 +470,7 @@ def p_locals_defvarrecur_error(p):
     '''
     global globalErrorSintactico
     if not globalErrorLex['error'] :
-        print(bcolors.FAIL+"\t No se a encontrado ningun ';', antes del "+p[3].value+bcolors.ENDC)
+        print(bcolors.FAIL+"\t No se ha encontrado ningun ';', antes del "+p[3].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
     
 
@@ -636,6 +642,7 @@ def p_valor_NINT(p):
     '''
     valor : NINT
     '''
+
     p[0]=Entero(INT=p.slice[1])
 
 def p_valor_NFLOAT(p) :
@@ -953,7 +960,7 @@ if __name__ == '__main__':
         outFile = open('RepresentacionAST.txt','w')
         try:
             ast.pprint2(outFile) # crea el archivo de impresion RepresentacionAST.txt
-            print('Done!')
+            print('Hecho!')
             print ('''
                   La representacion de el arbol de sintaxis abstracto de el programa analizado
                   se muestra en un archivo nuevo creado llamado RepresentacionAST.txt
@@ -962,14 +969,7 @@ if __name__ == '__main__':
         except KeyboardInterrupt:
             print('escritura del arbol cancelada... saliendo')
         outFile.close()
-        #try:
-        #    print(bcolors.FAIL)
-        ast.Analisissemantico()
-
-        #    print(bcolors.ENDC)
-        # except Exception:
-        #     print(bcolors.ENDC)
-        #     print(Exception)
+        x=ast.Analisissemantico()
 
     else:
         ast = None
