@@ -772,20 +772,20 @@ def p_expression_plus(p):
     '''
     expression : expression "+" expression
     '''
-    p[0]=Expression(op=p[2],left=p[1],right=p[3])
+    p[0]=Expression(op=p.slice[2],left=p[1],right=p[3])
 
 
 def p_expression_minus(p):
     '''
     expression : expression '-' expression
     '''
-    p[0]=Expression(op=p[2],left=p[1],right=p[3])
+    p[0]=Expression(op=p.slice[2],left=p[1],right=p[3])
 
 def p_expression_times(p):
     '''
     expression : expression '*' expression
     '''
-    p[0]=Expression(op=p[2],left=p[1],right=p[3])
+    p[0]=Expression(op=p.slice[2],left=p[1],right=p[3])
 
 def p_expression_times_error(p):
     '''
@@ -802,7 +802,7 @@ def p_expression_divide(p):
     '''
     expression : expression '/' expression
     '''
-    p[0]= Expression(op=p[2],left=p[1],right=p[3])
+    p[0]= Expression(op=p.slice[2],left=p[1],right=p[3])
 
 
 def p_expression_divide_error(p):
@@ -830,13 +830,13 @@ def p_expression_negative(p):
     '''
     expression : '-' expression
     '''
-    p[0] = UnariExpression(op=p[1],right=p[2])
+    p[0] = UnariExpression(op=p.slice[1],right=p[2])
 
 def p_expression_positive(p):
     '''
     expression : '+' expression
     '''
-    p[0] = UnariExpression(op=p[1],right=p[2])
+    p[0] = UnariExpression(op=p.slice[1],right=p[2])
 
 def p_expression_int(p):
     '''

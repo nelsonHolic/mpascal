@@ -14,10 +14,11 @@ añadir más.
 '''
 To do :
 Falta corregir los mensajes de error # varios
-Falta chequear que no se redefina una variable/parametro en una funcion de locals # pregunta a eingel # solved
-Falta corregir lo de los vectores de nuevo
-Falta corregir con los parametros vacios
-Falta
+Falta chequear que en ambas partes del if no haya un break
+Falta corregir los parametros que son vectores // errores raros
+Falta corregir todo lo de void (write, fun , etc)
+Falta ver eso de fun() :int|float que esta muy raro
+Falta ver algunos errores extraños como que diga que una variable es y no es un vector a la vez.
 '''
 
 import sys
@@ -195,21 +196,22 @@ class Variable(AST):
     _fields = ['ID','valor']
     indice=None
 
-    def Analisissemantico(self):
+    def Analisissemantico(self,bandera=0):
         n=get_symbol(self.ID.value)
         if not n:
             print("Error en la linea %s : No existe la variable %s "% (str(self.ID.lineno),self.ID.value))
         else:
-            if self.valor :
+            if self.valor and not bandera :
                 self.valor.Analisissemantico()
                 if self.valor.type != type (7):
                     print("Error en la linea %s : La variable %s es un vector y su indice debe ser entero." % (self.ID.lineno,self.ID.value))
-            if n.indice and self.valor :
-                self.type=n.type
-            elif n.indice and not self.valor:
-                print ("Error en la linea %s : La variable %s es un vector y no se accede a ella como tal." % (self.ID.lineno,self.ID.value))
-            elif not n.indice and self.valor:
-                print ("Error en la linea %s : La variable %s no es un vector y se intenta acceder a ella como tal."%(self.ID.lineno,self.ID.value))
+            if(not bandera):
+                if n.indice and self.valor :
+                    self.type=n.type
+                elif n.indice and not self.valor:
+                    print ("Error en la linea %s : La variable %s es un vector y no se accede a ella como tal." % (self.ID.lineno,self.ID.value))
+                elif not n.indice and self.valor:
+                    print ("Error en la linea %s : La variable %s no es un vector y se intenta acceder a ella como tal."%(self.ID.lineno,self.ID.value))
             self.type=n.type
             self.indice=self.valor
 
@@ -270,12 +272,12 @@ class Funcion(AST): # <----------------------
             self.locals.Analisissemantico() # Analisis a cada local
 
         self.statements.Analisissemantico() # Analisis a los statements
-        m = get_symbol("%return")
+        m = get_symbol("%return") # Buscamos si tiene return
         if m:
             a = get_symbol(self.ID.value)
             self.type  = m.type
             a.type = self.type
-        else :
+        else : # Si no tiene es void
             a = get_symbol(self.ID.value)
             self.type  = "void"
             a.type = "void"
@@ -343,7 +345,7 @@ class AssignVecStatement(AST):# Indices negativos es un error
     def Analisissemantico(self):
         m=get_symbol(self.ID.value)
         if not m:
-                    print("Error no existe la variable %s en la linea %s"% (self.ID.value,str(self.ID.lineno)))
+                    print("Error en la linea %s : No existe la variable %s en la linea %s"% (self.ID.lineno,self.ID.value))
         else:
             if m.indice :
                 self.expression.Analisissemantico()
@@ -367,7 +369,7 @@ class ReadStatement(AST):
         m=get_symbol(self.ID.value)
 
         if not m:
-            print("Error no existe la variable %s en la linea %s"% (self.ID.value,str(self.ID.lineno)))
+            print("Error en la linea %s : No existe la variable %s ."% (self.ID.lineno,self.ID.value))
 
 
 class ReadStatementVect(AST):
@@ -379,16 +381,21 @@ class ReadStatementVect(AST):
         if not m:
             print("Error en la linea %s : No existe la variable %s ."% (self.ID.lineno,self.ID.value))
         elif self.posexpre :
-            if type(self.posexpre)!= int:
-                print("Error en la linea %s : El indice de la variable %s no es de tipo entero."% (self.ID.lineno,m.name))
+            if m.indice :
+                if type(self.posexpre)!= int:
+                    print("Error en la linea %s : El indice de la variable %s no es de tipo entero."% (self.ID.lineno,m.name))
+            else :
+                print("Error en la linea %s : La variable %s no es un vector y se intenta acceder a ella como tal."% (self.ID.lineno,self.ID.value))
+        elif not self.posexpre and m.indice :
+            print("Error en la linea %s : La funcion read solo puede leer un dato, no un vector completo."% (self.ID.lineno))
 
 
 
 class WriteStatement(AST):
     _fields = ['expression']
 
-    def Analisissemantico(self): # Falta
-        pass
+    def Analisissemantico(self):
+        self.expression.Analisissemantico()
 
 
 class BeginEndStatement(AST):
@@ -407,7 +414,7 @@ class Defvar(AST):
         attach_symbol(self.ID, eval(self.tipo),self.valor)
         if self.valor:
             if type(eval(self.valor.value)) != type(7):
-                print("Error de tipo para la asignacion de tamano en la linea %s" % (self.ID.lineno))
+                print("Error en la linea %s : La asignacion de tamano en un vector debe ser un numero entero." % (self.ID.lineno))
         self.type = eval(self.tipo)
 
 
@@ -465,7 +472,7 @@ class Expression(AST):
         if self.left.type==self.right.type:
             self.type=self.left.type
         else:
-            print("Error en la linea FALTA : La expresion  %s %s %s involucra diferentes tipos de datos."% (self.left,self.op,self.right))
+            print("Error en la linea %s : La expresion  %s %s %s involucra diferentes tipos de datos."% (self.op.lineno,self.left,self.op.value,self.right))
             
 
 class UnariExpression(AST):
@@ -495,7 +502,7 @@ class RelationalOp(AST):
         self.left.Analisissemantico()
         self.right.Analisissemantico()
         if(self.left.type!=self.right.type):
-            print("Error de tipos en la expresion logica %s %s %s" % (self.left,self.op,self.right))
+            print("Error en la linea %s de tipos en la expresion logica %s %s %s" % (self.op.lineno,self.left,self.op.value,self.right))
         else :
             self.type=type(True)
 
@@ -517,43 +524,49 @@ class FunCall(AST): # Falta chequear que si es un array el argumento, se mire si
     def Analisissemantico(self):
         m=get_symbol(self.ID.value)
         if not m:
-            print("Error no existe la funcion %s en la linea %s"% (self.ID.value,str(self.ID.lineno)))
-        elif m.params or m.params==0 : #what the fuck
-            if m.params==0 :
-                if self.args :
-                    print("Error en la linea %s : La funcion %s no requiere argumentos." % (self.ID.lineno,self.ID.value))
-                else:
+            print("Error en la linea %s : La funcion %s no existe"% (self.ID.lineno,self.ID.value))
+        elif m.name!="main":
+            if m.params or m.params==0 : #what the fuck
+                if m.params==0 :
+                    if self.args :
+                        print("Error en la linea %s : La funcion %s no requiere argumentos." % (self.ID.lineno,self.ID.value))
+                    else:
+                        self.type = m.type
+                else :
+                    if self.args :
+                        if len(m.params) > len(self.args.argsList):
+                                print("Error en la linea %s : Faltan parametros en el llamado a la funcion %s, se esperaban %s parametros."% (self.ID.lineno,self.ID.value,len(m.params)))
+                        elif len(m.params) < len(self.args.argsList):
+                                print("Error en la linea %s : Sobran parametros en el llamado a la funcion %s, se esperaban %s parametros."% (self.ID.lineno,self.ID.value,len(m.params)))
+                        else : # Desde aca muto
+                            i = 0
+                            for arg in self.args.argsList:
+
+                                if not m.params[i].valor : # Si no es un vector el parametro
+                                    arg.Analisissemantico()
+                                    if arg.type != m.params[i].type: # si los tipos son diferentes error
+                                            print("3Error en la linea %s : Los tipos en el llamado de la funcion  %s no son correctos.En el argumento %s se esperaba un %s y se ingreso un %s. " % (self.ID.lineno,self.ID.value,str(i+1),m.params[i].type,arg.type ))
+                                else : # Si es un vector el parametro
+                                    if self.args.argsList[i].valor : # si se le engresa una posicion
+                                        arg.Analisissemantico()
+                                        if arg.type != m.params[i].type:
+                                            print("1.Error en la linea %s : Los tipos en el llamado de la funcion  %s no son correctos.En el argumento %s se esperaba un %s y se ingreso un %s. " % (self.ID.lineno,self.ID.value,str(i+1),m.params[i].type,arg.type ))
+                                    else:   # si no se le ingresa posicion
+                                        arg.Analisissemantico(1)
+                                        l=get_symbol(arg.ID.value) # Buscamos el argumento como variable
+                                        if l.indice.value != m.params[i].valor.value : # si los indices del parametro y del vector ingresado son diferentes
+                                            print ("2.Error en la linea %s : En la funcion %s el argumento %s ( %s ) es un vector de %s y se esperaba un vector de %s " % (self.ID.lineno,self.ID.value,str(i+1),arg.ID.value,l.indice.value,m.params[i].valor.value ))
+                                        elif arg.type != m.params[i].type : # si los indices son iguales pero los tipos son diferentes
+                                            print("3.Error en la linea %s : Los tipos en el llamado de la funcion  %s no son correctos. En el argumento %s (%s) se esperaba un %s y se ingreso un %s. " % (self.ID.lineno,self.ID.value,str(i+1),arg.ID.value,m.params[i].type,arg.type ))
+                            i +=1
+                    else :
+                        print("Error en la linea %s : Faltan parametros en el llamado a la funcion %s, se esperaban %s parametros."% (self.ID.lineno,self.ID.value,len(m.params)))
+
                     self.type = m.type
             else :
-                if self.args :
-                    if len(m.params) != len(self.args.argsList):
-                            print("Error en la linea %s : Faltan parametros en la funcion %s " % (self.ID.lineno,m.name))
-                    else :
-                        i = 0
-                        for arg in self.args.argsList:
-                            if not m.params[i].valor :
-                                arg.Analisissemantico()
-                                if arg.type != m.params[i].type:
-                                        print("3Error en la linea %s :Los tipos en el llamado de la funcion  %s no son correctos.En el argumento %s se esperaba un %s y se obtuvo un %s. " % (self.ID.lineno,self.ID.value,str(i+1),m.params[i].type,arg.type ))
-                            else :
-                                arg.Analisissemantico()
-                                if self.args.argsList :
-                                    if arg.type != m.params[i].type:
-                                        print("2Error en la linea %s :Los tipos en el llamado de la funcion  %s no son correctos.En el argumento %s se esperaba un %s y se obtuvo un %s. " % (self.ID.lineno,self.ID.value,str(i+1),m.params[i].type,arg.type ))
-
-                                else:
-                                    l=get_symbol(self.args.argsList[i].ID.value)
-                                    if i.indice != m.params[i].indice :
-                                        print ("lol %s %s %s %s %s %s " % (self.ID.lineno,self.ID.value,str(i+1),arg.ID.value,m.params[i].valor.value,arg.indice ))
-                                    elif arg.type != m.params[i].type :
-                                        print("1Error en la linea %s :Los tipos en el llamado de la funcion  %s no son correctos.En el argumento %s se esperaba un %s y se obtuvo un %s. " % (self.ID.lineno,self.ID.value,str(i+1),m.params[i].type,arg.type ))
-                        i +=1
-                else :
-                    print("Error en la linea %s : Faltan parametros en la funcion %s."% (self.ID.lineno,self.ID.value))
-
-                self.type = m.type
-        else :
-            print("Error en la linea %s : La variable %s no es una funcion." % (self.ID.lineno, self.ID.value))
+                print("Error en la linea %s : La variable %s no es una funcion." % (self.ID.lineno, self.ID.value))
+        else:
+            print("Error en la linea %s : La funcion principal main no se puede llamar dentro de una funcion."% self.ID.lineno)
 
 
 
