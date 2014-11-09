@@ -19,6 +19,7 @@ Falta corregir los parametros que son vectores // errores raros
 Falta corregir todo lo de void (write, fun , etc)
 Falta ver eso de fun() :int|float que esta muy raro
 Falta ver algunos errores extraños como que diga que una variable es y no es un vector a la vez.
+Falta revisar lo de los indices negativos.
 '''
 
 import sys
@@ -183,12 +184,18 @@ class Entero(AST):
     type=int
     _fields = ['INT']
 
+    def __repr__(self):
+        print self.INT.value
+
 
 
 class Float(AST):
 
     type=float
     _fields = ['FLOAT']
+
+    def __repr__(self):
+        print self.FLOAT.value
 
 class Variable(AST):
 
@@ -214,6 +221,9 @@ class Variable(AST):
                     print ("Error en la linea %s : La variable %s no es un vector y se intenta acceder a ella como tal."%(self.ID.lineno,self.ID.value))
             self.type=n.type
             self.indice=self.valor
+
+        def __repr__(self):
+            print self.ID.value
 
 
 @validate_fields(funlist=list)
@@ -552,6 +562,7 @@ class FunCall(AST): # Falta chequear que si es un array el argumento, se mire si
                                         if arg.type != m.params[i].type:
                                             print("1.Error en la linea %s : Los tipos en el llamado de la funcion  %s no son correctos.En el argumento %s se esperaba un %s y se ingreso un %s. " % (self.ID.lineno,self.ID.value,str(i+1),m.params[i].type,arg.type ))
                                     else:   # si no se le ingresa posicion
+
                                         arg.Analisissemantico(1)
                                         l=get_symbol(arg.ID.value) # Buscamos el argumento como variable
                                         if l.indice.value != m.params[i].valor.value : # si los indices del parametro y del vector ingresado son diferentes
