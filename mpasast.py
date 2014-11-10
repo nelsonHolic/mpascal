@@ -13,13 +13,9 @@ añadir más.
 
 '''
 To do :
-Falta corregir los mensajes de error # varios
 falta agregar error despues del error de asignacion a un array
-Falta corregir todo lo de void (write, fun , etc) <------ NPI
-read(a)        /* Can't read into an array */
-if a > 1 then return bogus_nested(a) * bogus_fact(a - 1); /* okay: float * float */
-else if bar(n) > float(0) then
-Falta ver algunos errores extraños como que diga que una variable es y no es un vector a la vez.
+Falta corregir todo lo de void (fun , etc) <------ NPI
+if a > 1 then return bogus_nested(a) * bogus_fact(a - 1); /* okay: float * float */ else if bar(n) > float(0) then <---- funciones que se llaman sin saber su return
 Falta revisar lo de los indices negativos.
 '''
 
@@ -172,11 +168,7 @@ def validate_fields(**fields):
 
 # ----------------------------------------------------------------------
 # Nodos AST especificos
-#
-# Para cada nodo es necesario definir una clase y añadir la especificación
-# del apropiado _fields = [] que indique que campos deben ser almacenados.
-# A modo de ejemplo, para un operador binario es posible almacenar el
-# operador, la expresión izquierda y derecha, como esto:
+# ----------------------------------------------------------------------
 
 
 
@@ -246,7 +238,7 @@ class Program(AST):
 
         m=get_symbol("main")
         if not m:
-            print(" Error : funcion main no definida.")
+            print("ERROR : funcion main no definida.")
 
 
 
@@ -263,7 +255,7 @@ class Statements(AST):
         for statement in self.statements:
             statement.Analisissemantico()
 
-class Funcion(AST): # <----------------------
+class Funcion(AST): # <---------------------- falta saber el tipo antes de tenerla toda
 
     type = None
     _fields = ['ID', 'parameters', 'locals','statements']
@@ -384,6 +376,8 @@ class ReadStatement(AST):
 
         if not m:
             print("Error en la linea %s : No existe la variable %s ."% (self.ID.lineno,self.ID.value))
+        elif m.indice:
+            print("Error en la linea %s : La variable %s es un vector y la funcion read no puede recibir un vector como parametro, solamente una posicion."% (self.ID.lineno,self.ID.value))
 
 
 class ReadStatementVect(AST):
@@ -511,8 +505,11 @@ class CastExpression(AST):
 
     def Analisissemantico(self):
         self.right.Analisissemantico()
-        self.right.type=eval(self.tipo)
-        self.type=self.right.type
+        if self.right.type != type(0) and self.right.type != float:
+            print("Error en la linea  : No se puede castear a %s algo que no sea tipo int o float." %(self.tipo))
+        else :
+            self.type=eval(self.tipo)
+
 
     def __repr__(self):
             return str(self.tipo)+"("+str(self.right)+")"
@@ -576,7 +573,7 @@ class FunCall(AST): # Falta chequear que si es un array el argumento, se mire si
                                 if not m.params[i].valor: # Si no es un vector el parametro
                                     arg.Analisissemantico()
                                     if arg.type != m.params[i].type: # si los tipos son diferentes error
-                                            print("3.Error en la linea %s : Los tipos en el llamado de la funcion  %s no son correctos.En el argumento %s se esperaba un %s y se ingreso un %s. " % (self.ID.lineno,self.ID.value,str(i+1),m.params[i].type,arg.type ))
+                                            print("Error en la linea %s : Los tipos en el llamado de la funcion  %s no son correctos.En el argumento %s se esperaba un %s y se ingreso un %s. " % (self.ID.lineno,self.ID.value,str(i+1),m.params[i].type,arg.type ))
 
                                 elif m.params[i].valor and arg.valor:
                                     arg.Analisissemantico()
@@ -585,16 +582,16 @@ class FunCall(AST): # Falta chequear que si es un array el argumento, se mire si
                                     if arg.valor: # si se le engresa una posicion
                                         arg.Analisissemantico()
                                         if arg.type != m.params[i].type:
-                                            print("1.Error en la linea %s : Los tipos en el llamado de la funcion  %s no son correctos.En el argumento %s se esperaba un %s y se ingreso un %s. " % (self.ID.lineno,self.ID.value,str(i+1),m.params[i].type,arg.type ))
+                                            print("Error en la linea %s : Los tipos en el llamado de la funcion  %s no son correctos.En el argumento %s se esperaba un %s y se ingreso un %s. " % (self.ID.lineno,self.ID.value,str(i+1),m.params[i].type,arg.type ))
                                     else:   # si no se le ingresa posicion
                                         arg.Analisissemantico(1)
                                         l=get_symbol(arg.ID.value) # Buscamos el argumento como variable
                                         if l:
                                             if l.indice:
                                                 if l.indice.value != m.params[i].valor.value : # si los indices del parametro y del vector ingresado son diferentes
-                                                    print ("2.Error en la linea %s : En la funcion %s el argumento %s ( %s ) es un vector de %s y se esperaba un vector de %s " % (self.ID.lineno,self.ID.value,str(i+1),arg.ID.value,l.indice.value,m.params[i].valor.value ))
+                                                    print ("Error en la linea %s : En la funcion %s el argumento %s ( %s ) es un vector de %s y se esperaba un vector de %s " % (self.ID.lineno,self.ID.value,str(i+1),arg.ID.value,l.indice.value,m.params[i].valor.value ))
                                                 elif arg.type != m.params[i].type : # si los indices son iguales pero los tipos son diferentes
-                                                    print("3.Error en la linea %s : Los tipos en el llamado de la funcion  %s no son correctos. En el argumento %s (%s) se esperaba un %s y se ingreso un %s. " % (self.ID.lineno,self.ID.value,str(i+1),arg.ID.value,m.params[i].type,arg.type ))
+                                                    print("Error en la linea %s : Los tipos en el llamado de la funcion  %s no son correctos. En el argumento %s (%s) se esperaba un %s y se ingreso un %s. " % (self.ID.lineno,self.ID.value,str(i+1),arg.ID.value,m.params[i].type,arg.type ))
                                             else:
                                                     print("error en la linea %s: la variable %s no es un")
                                 i +=1
@@ -606,6 +603,9 @@ class FunCall(AST): # Falta chequear que si es un array el argumento, se mire si
                 print("Error en la linea %s : La variable %s no es una funcion." % (self.ID.lineno, self.ID.value))
         else:
             print("Error en la linea %s : La funcion principal main no se puede llamar dentro de una funcion."% self.ID.lineno)
+
+    def __repr__(self):
+            return str(self.ID.value)+"("+str(self.args.argsList)+")"
 
 
 
