@@ -1,5 +1,7 @@
 # mpasast.py
 # -*- coding: utf-8 -*-
+
+
 '''
 Objetos Arbol de Sintaxis Abstracto (AST - Abstract Syntax Tree).
 
@@ -11,8 +13,7 @@ nodos AST pueden ser encontrados al comienzo del archivo.  Usted deberá
 añadir más.
 '''
 
-'''
-To do :
+'''todo:
 falta agregar error despues del error de asignacion a un array
 Falta corregir todo lo de void (fun , etc) <------ NPI
 if a > 1 then return bogus_nested(a) * bogus_fact(a - 1); /* okay: float * float */ else if bar(n) > float(0) then <---- funciones que se llaman sin saber su return
@@ -32,6 +33,16 @@ class bcolorsAST:
     ENDC = '\033[0m'
 
 
+import StringIO
+data = StringIO.StringIO()
+
+lasLabel = 0
+
+
+def newLabel():
+    global lasLabel
+    lasLabel += 1
+    return ".L"+str(lasLabel)
 
 
 
@@ -260,11 +271,14 @@ class Program(AST):
             print("ERROR : funcion main no definida.")
 
     def codeGenerator(self,file,indent = 0):
+        print >>data, '.section ".rodata"'
         cadena = "\t"*indent
-        print >>file, "\n%s!program (start) ---------------" % cadena
+        print >>file, "\n%s!program" % cadena
         for func in self.funlist:
+            print >> file, "\t.global %s" % func.ID.value
             func.codeGenerator(file, indent + 1)
-        print >>file, "%s!program (end) ----------------" %cadena
+        print >>file, data.getvalue()
+
 
 
 
@@ -322,6 +336,7 @@ class Funcion(AST): # <---------------------- falta saber el tipo antes de tener
 
     def codeGenerator(self,file,indent = 0):
         cadena = "\t"*indent
+        print >>file, "\n%s:" % self.ID.value
         print >>file, "\n%s! function : %s (start) Hola soy una funcion" % (cadena, self.ID.value)
         for statement in self.statements:
             statement.codeGenerator(file, indent + 1)
@@ -424,8 +439,10 @@ class printStatement(AST):
 
     def codeGenerator(self,file,indent = 0):
             cadena = "\t"*indent
+            label = newLabel()
             print >>file, "\n%s! Print (start)" % cadena
             print >>file, "%s! Print (end)\n" % cadena
+            print >> data, '%s: .asciz %s' % (label, self.STRING)
 
 class ReadStatement(AST):
     _fields = ['ID']
@@ -519,13 +536,14 @@ class IfStatement(AST):
     def codeGenerator(self,file,indent = 0):
         cadena = "\t"*indent
         print >>file, "\n%s! if (start)" % cadena
+        next_label = newLabel()
         self.condition.evalExpression(file, indent+1, [])
         print >>file, "\n\t%s! if false: goto next\n" % cadena
         print >>file, "\n\t%s! then (start)" % cadena
         self.then_b.codeGenerator(file, indent+2)
         print >>file, "\t%s! then (end)\n" % cadena
         print >>file, "%s! if (end) \n" % cadena
-        print >>file, "%s! next:\n" % cadena
+        print >>file, "%s  %s: !next\n" % (cadena, next_label)
 
 class BreakStatement(AST):
     _fields = ['breaky']
@@ -553,6 +571,8 @@ class IfelseStatement(AST):
 
     def codeGenerator(self,file, indent = 0):
         cadena = "\t"*indent
+        else_label = newLabel()
+        next_label = newLabel()
         print >>file, "\n%s! if (start)" % cadena
         self.condition.evalExpression(file, indent+1, [])
         print >>file, "\n\t%s! if false: goto else\n" % cadena
@@ -560,12 +580,12 @@ class IfelseStatement(AST):
         self.then_b.codeGenerator(file,indent+2)
         print >>file, "\n\t%s! goto next \n" % cadena
         print >>file, "\n\t%s! then (end)\n" % cadena
-        print >>file, "\n\t%s! else:" % cadena
+        print >>file, "\n\t%s  %s: !else" % (cadena, else_label)
         print >>file, "\n\t%s! else (start)" % cadena
         self.else_b.codeGenerator(file,indent+2)
         print >>file, "\n\t%s! else (end)\n" % cadena
         print >>file, "\n%s! if (end)" % cadena
-        print >>file, "\n%s! next: \n" % cadena
+        print >>file, "\n%s  %s: !next \n" % (cadena, next_label)
 
 class WhileStatement(AST):
     _fields = ['logica','statements']
@@ -576,15 +596,17 @@ class WhileStatement(AST):
 
     def codeGenerator(self,file, indent = 0):
         cadena = "\t"*indent
+        test_label = newLabel()
+        done_label = newLabel()
         print >>file, "\n%s! while (start)" % cadena
-        print >>file, "\n\t%s! test:" % cadena
+        print >>file, "\t%s %s: !test" % (cadena,test_label)
         self.logica.evalExpression(file, indent+1, [])
         print >>file, "\n\t%s! relop := pop" % cadena
-        print >>file, "\n\t%s! if not relop: goto done" % cadena
+        print >>file, "\n\t%s! if not relop: goto %s done" % (cadena, done_label)
         for statement in self.statements:
             statement.codeGenerator(file, indent +1)
-        print >> file, "\n\t%s! goto test" % cadena
-        print >> file, "\n\t%s! done:" % cadena
+        print >> file, "\n\t%s! goto %s test" % (cadena, test_label)
+        print >> file, "\t%s  %s: !done" % (cadena, done_label)
         print >>file, "%s! while (end)\n" % cadena
 
 class ReturnStatement(AST):

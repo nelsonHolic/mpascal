@@ -30,6 +30,6 @@ fun main()
         begin
             d[4]:=3
         end;
-
+        print("hola mundo");
         d[1+(34*2)/34]:=hola(3.4)
     end
