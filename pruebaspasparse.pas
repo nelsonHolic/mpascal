@@ -10,9 +10,14 @@ fun hola(B:float)
     begin
         if(23 <= 34) then
         begin
-            B := 23.1
-        end;
-        t:=x
+            B := 23.1 + 32.43 + 34.09/-(B*32.3)
+        end
+        else
+            begin
+                read(t);
+                write(t)
+            end;
+        return 4
     end
 
 
@@ -21,10 +26,10 @@ fun main()
     A: float;
     d:int[4];
     begin
-        while (3<5) and (A == 34+5) do
+        while (3<5) and (5 == 34+5) do
         begin
             d[4]:=3
         end;
-        a:=x[3];
-        d:=32
+
+        d[1+(34*2)/34]:=hola(3.4)
     end

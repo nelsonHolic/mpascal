@@ -635,7 +635,7 @@ def p_valor_ID_vect_Error(p):
     valor : ID '[' logica ']'
     '''
     if not globalErrorLex['error']:
-        print(bcolors.FAIL+"\t valor invalido : operacion logica"+bcolors.ENDC)
+        print(bcolors.FAIL+"\t valor invalido : operacion logica "+bcolors.ENDC)
         globalErrorSintactico['error']=True
 
 def p_valor_NINT(p):
@@ -793,7 +793,7 @@ def p_expression_times_error(p):
     '''
     global globalErrorSintactico
     if not globalErrorLex['error'] :
-        print(bcolors.FAIL+"\t valor incorrecto despues de *, en su lugar se encontro "+p[3].value+bcolors.ENDC)
+        print(bcolors.FAIL+"\t simbolo erroneo despues de * "+p[3].value+bcolors.ENDC)
         globalErrorSintactico['error']=True
     
 
@@ -945,6 +945,45 @@ def p_error(p):
 
 parse = yacc.yacc()
 
+def compilar():
+    try:
+        filename = sys.argv[1]
+        f = open(filename)
+        data = f.read()
+        f.close()
+    except IndexError:
+        sys.stdout.write("ha habido un error en la lectura del archivo. Leyendo en entrada estandar:\n")
+        data = sys.stdin.read()
+    ast = parse.parse(data,debug = 0)
+    if ast  and ((not globalErrorSintactico['error']) and (not globalErrorLex['error'] and (not boolError['error']))) :
+        segundoArg = None
+        try:
+            segundoArg = sys.argv[2]
+        except Exception:
+            pass
+        if segundoArg == "-t":
+            print('escribiendo la representacion del arbol(esto puede tardar segun la profundidad)...')
+            outFile = open('RepresentacionAST.txt','w')
+            try:
+                ast.pprint2(outFile) # crea el archivo de impresion RepresentacionAST.txt
+                print('Hecho!')
+                print ('''
+                      La representacion de el arbol de sintaxis abstracto de el programa analizado
+                      se muestra en un archivo nuevo creado llamado RepresentacionAST.txt
+                      ubicado en la carpeta donde se encuentre mpasparse.py
+                      ''')
+            except KeyboardInterrupt:
+                print('escritura del arbol cancelada... saliendo')
+            outFile.close()
+        print(bcolors.FAIL)
+        x=ast.Analisissemantico()
+        print(bcolors.ENDC)
+
+    else:
+        ast = None
+    return ast
+
+
 if __name__ == '__main__':
     try:
         filename = sys.argv[1]
@@ -972,7 +1011,6 @@ if __name__ == '__main__':
         print(bcolors.FAIL)
         x=ast.Analisissemantico()
         print(bcolors.ENDC)
-
     else:
         ast = None
 

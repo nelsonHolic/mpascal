@@ -59,17 +59,6 @@ class AST(object):
             for name,value in kwargs.items():
                 setattr(self,name,value)
 
-
-    def pprint(self,archivo= None):
-        salida = ''
-        for depth, node in flatten(self):
-            if type(archivo) == file:
-                salida += "\n%s%s" % (" "*(4*depth),node)
-            else:
-                print("%s%s" % (" "*(4*depth),node))
-        if type(archivo) == file:
-            archivo.write(salida)
-
     def pprint2(self,archivo= None):
             salida = ''
             salida += "%s" % (self.representacion(stringBefore= ""))
@@ -155,6 +144,11 @@ class AST(object):
     def Analisissemantico(self):
         pass
 
+    def codeGenerator(self,file, indent = 0):
+        pass
+
+
+
 def validate_fields(**fields):
     def validator(cls):
         old_init = cls.__init__
@@ -180,6 +174,12 @@ class Entero(AST):
     def __repr__(self):
         return self.INT.value
 
+    def evalExpression(self, file, indent=0, pila=[]):
+        cadena = "\t"*indent
+        print >> file, "\n%s! push %s" % (cadena, self.INT.value)
+        pila.append(self.INT.value)
+
+
 
 
 class Float(AST):
@@ -189,6 +189,12 @@ class Float(AST):
 
     def __repr__(self):
         return self.FLOAT.value
+
+    def evalExpression(self, file, indent=0, pila=[]):
+        cadena = "\t"*indent
+        print >> file, "\n%s! push %s" % (cadena, self.FLOAT.value)
+        pila.append(self.FLOAT.value)
+
 
 class Variable(AST):
 
@@ -218,8 +224,21 @@ class Variable(AST):
             self.type=n.type
             self.indice=self.valor
 
+    def evalExpression(self, file, indent=0, pila=[]):
+        cadena = "\t"*indent
+        if self.valor:
+            self.valor.evalExpression(file, indent, pila)
+            print >> file, "\n%s! index := pop" % cadena
+            print >> file, "\n%s! push %s[index]" % (cadena, self.ID.value)
+        else:
+            print >> file, "\n%s! push %s" % (cadena, self.ID.value)
+
+
     def __repr__(self):
-        return self.ID.value
+        if self.valor:
+            return self.ID.value+"["+self.valor+"]"
+        else:
+            return self.ID.value
 
 
 @validate_fields(funlist=list)
@@ -240,7 +259,12 @@ class Program(AST):
         if not m:
             print("ERROR : funcion main no definida.")
 
-
+    def codeGenerator(self,file,indent = 0):
+        cadena = "\t"*indent
+        print >>file, "\n%s!program (start) ---------------" % cadena
+        for func in self.funlist:
+            func.codeGenerator(file, indent + 1)
+        print >>file, "%s!program (end) ----------------" %cadena
 
 
 
@@ -255,6 +279,13 @@ class Statements(AST):
         for statement in self.statements:
             statement.Analisissemantico()
 
+    def codeGenerator(self,file,indent = 0):
+        for statement in self.statements:
+            statement.codeGenerator(file, indent)
+
+    def __iter__(self):
+        return self.statements.__iter__()
+
 class Funcion(AST): # <---------------------- falta saber el tipo antes de tenerla toda
 
     type = None
@@ -263,7 +294,7 @@ class Funcion(AST): # <---------------------- falta saber el tipo antes de tener
     def Analisissemantico(self):
         global current
         global _scope
-        attach_symbol(self.ID,None)
+        attach_symbol(self.ID,int)
         m = get_symbol(self.ID.value)
         new_scope()
         if self.parameters :
@@ -289,6 +320,12 @@ class Funcion(AST): # <---------------------- falta saber el tipo antes de tener
             a.type = "void"
         pop_scope()
 
+    def codeGenerator(self,file,indent = 0):
+        cadena = "\t"*indent
+        print >>file, "\n%s! function : %s (start) Hola soy una funcion" % (cadena, self.ID.value)
+        for statement in self.statements:
+            statement.codeGenerator(file, indent + 1)
+        print >>file, "%s! function : %s (end) Chao soy una funcion\n" % (cadena, self.ID.value)
 
 
 @validate_fields(param_decls=list)
@@ -325,6 +362,7 @@ class Args(AST):
 
 
 
+
 class AssignStatement(AST):
     _fields = ['ID', 'expression']
 
@@ -332,6 +370,7 @@ class AssignStatement(AST):
         m=get_symbol(self.ID.value)
         if not m:
                     print("Error en la linea %s : No existe la variable %s "% (self.ID.lineno,self.ID.value))
+                    self.expression.Analisissemantico()
         else:
             if not m.indice :
                 self.expression.Analisissemantico()
@@ -342,6 +381,13 @@ class AssignStatement(AST):
                         print("Error en la asignacion de %s en la linea %s , %s es de tipo %s y se le esta asignando un valor del tipo %s" % (m.name,str(self.ID.lineno),m.name,m.type,self.expression.type))
             else :
                 print("Error en la linea %s : La variable %s es un vector y no se accede a ella como tal" % (self.ID.lineno,self.ID.value)) # tiene indice y no
+
+    def codeGenerator(self,file,indent = 0):
+        cadena = "\t"*indent
+        print >>file, "\n%s! Assign(start)" % cadena
+        self.expression.evalExpression(file, indent+1, [])
+        print >> file, "\n\t%s! %s := pop" % (cadena, self.ID.value)
+        print >>file, "%s! Assing (end)\n" % cadena
 
 
 
@@ -364,12 +410,31 @@ class AssignVecStatement(AST):# Indices negativos es un error
             else :
                 print("Error en la linea %s : La variable %s no es un vector y se accede a ella como tal. " % (self.ID.lineno,self.ID.value)) # no tiene indice y si
 
+    def codeGenerator(self,file,indent = 0):
+            cadena = "\t"*indent
+            print >>file, "\n%s! AssignVec (start)" % cadena
+            self.posexpreori.evalExpression(file, indent+1, [])
+            print >> file, "\n\t%s! index := pop" % cadena
+            self.expression.evalExpression(file, indent+1, [])
+            print >> file, "\n\t%s! %s[index] := pop" % (cadena, self.ID.value)
+            print >> file, "%s! AssingVec (end)\n" % cadena
 
 class printStatement(AST):
     _fields = ['STRING']
 
+    def codeGenerator(self,file,indent = 0):
+            cadena = "\t"*indent
+            print >>file, "\n%s! Print (start)" % cadena
+            print >>file, "%s! Print (end)\n" % cadena
+
 class ReadStatement(AST):
     _fields = ['ID']
+
+    def codeGenerator(self,file,indent = 0):
+            cadena = "\t"*indent
+            print >>file, "\n%s! Read(start)" % cadena
+            print >>file, "%s! Read (end)\n" % cadena
+
 
     def Analisissemantico(self):
         m=get_symbol(self.ID.value)
@@ -397,15 +462,27 @@ class ReadStatementVect(AST):
         elif not self.posexpre and m.indice :
             print("Error en la linea %s : La funcion read solo puede leer un dato, no un vector completo."% (self.ID.lineno))
 
-
+    def codeGenerator(self,file,indent = 0):
+            cadena = "\t"*indent
+            print >>file, "\n%s! ReadVec(start)" % cadena
+            print >>file, "%s! ReadVec(end)\n" % cadena
 
 class WriteStatement(AST):
     _fields = ['expression','token']
 
     def Analisissemantico(self):
         self.expression.Analisissemantico()
-        if self.expression.type != int or self.expression.type != float:
+        if self.expression.type != int and self.expression.type != float:
             print("Error en la linea %s : write solo acepta tipo INT o FLOAT"%(self.token.lineno))
+
+
+    def codeGenerator(self,file,indent = 0):
+            cadena = "\t"*indent
+            print >>file, "\n%s! write (start)" % cadena
+            self.expression.evalExpression(file,indent+1)
+            print >>file, "\n\t%s! write := pop\n" % cadena
+            print >>file, "\n%s! write (end)\n" % cadena
+
 
 
 class BeginEndStatement(AST):
@@ -413,6 +490,9 @@ class BeginEndStatement(AST):
 
     def Analisissemantico(self):
         self.statements.Analisissemantico()
+
+    def codeGenerator(self,file,indent = 0):
+        self.statements.codeGenerator(file, indent)
 
 
 
@@ -436,11 +516,32 @@ class IfStatement(AST):
         self.condition.Analisissemantico()
         self.then_b.Analisissemantico()
 
+    def codeGenerator(self,file,indent = 0):
+        cadena = "\t"*indent
+        print >>file, "\n%s! if (start)" % cadena
+        self.condition.evalExpression(file, indent+1, [])
+        print >>file, "\n\t%s! if false: goto next\n" % cadena
+        print >>file, "\n\t%s! then (start)" % cadena
+        self.then_b.codeGenerator(file, indent+2)
+        print >>file, "\t%s! then (end)\n" % cadena
+        print >>file, "%s! if (end) \n" % cadena
+        print >>file, "%s! next:\n" % cadena
+
 class BreakStatement(AST):
     _fields = ['breaky']
 
+    def codeGenerator(self,file, indent = 0):
+        cadena = "\t"*indent
+        print >>file, "\n%s! break (start)\n" % cadena
+        print >>file, "%s! break (end) \n" % cadena
+
 class SkipStatement(AST):
     _fields = ['skippy']
+
+    def codeGenerator(self,file, indent = 0):
+        cadena = "\t"*indent
+        print >>file, "\n%s! skip (start)\n" % cadena
+        print >>file, "%s! skip (end) \n" % cadena
 
 class IfelseStatement(AST):
     _fields = ['condition', 'then_b','else_b']
@@ -450,12 +551,41 @@ class IfelseStatement(AST):
         self.then_b.Analisissemantico()
         self.else_b.Analisissemantico()
 
+    def codeGenerator(self,file, indent = 0):
+        cadena = "\t"*indent
+        print >>file, "\n%s! if (start)" % cadena
+        self.condition.evalExpression(file, indent+1, [])
+        print >>file, "\n\t%s! if false: goto else\n" % cadena
+        print >>file, "\n\t%s! then (start)" % cadena
+        self.then_b.codeGenerator(file,indent+2)
+        print >>file, "\n\t%s! goto next \n" % cadena
+        print >>file, "\n\t%s! then (end)\n" % cadena
+        print >>file, "\n\t%s! else:" % cadena
+        print >>file, "\n\t%s! else (start)" % cadena
+        self.else_b.codeGenerator(file,indent+2)
+        print >>file, "\n\t%s! else (end)\n" % cadena
+        print >>file, "\n%s! if (end)" % cadena
+        print >>file, "\n%s! next: \n" % cadena
+
 class WhileStatement(AST):
     _fields = ['logica','statements']
 
     def Analisissemantico(self):
         self.logica.Analisissemantico()
         self.statements.Analisissemantico()
+
+    def codeGenerator(self,file, indent = 0):
+        cadena = "\t"*indent
+        print >>file, "\n%s! while (start)" % cadena
+        print >>file, "\n\t%s! test:" % cadena
+        self.logica.evalExpression(file, indent+1, [])
+        print >>file, "\n\t%s! relop := pop" % cadena
+        print >>file, "\n\t%s! if not relop: goto done" % cadena
+        for statement in self.statements:
+            statement.codeGenerator(file, indent +1)
+        print >> file, "\n\t%s! goto test" % cadena
+        print >> file, "\n\t%s! done:" % cadena
+        print >>file, "%s! while (end)\n" % cadena
 
 class ReturnStatement(AST):
     _fields = ['expression','token']
@@ -484,6 +614,21 @@ class Expression(AST):
         else:
             print("Error en la linea %s : La expresion  %s %s %s involucra diferentes tipos de datos."% (self.op.lineno,self.left,self.op.value,self.right))
 
+
+    def evalExpression(self, file, indent = 0, pila = []):
+        cadena = "\t"*indent
+        self.left.evalExpression(file, indent, pila)
+        self.right.evalExpression(file, indent, pila)
+        if self.op.value == "+":
+            print >> file, "\n%s!    add" % cadena
+        if self.op.value == "-":
+            print >> file, "\n%s!    sub" % cadena
+        if self.op.value == "/":
+            print >> file, "\n%s!    div" % cadena
+        if self.op.value == "*":
+            print >> file, "\n%s!    multiply" % cadena
+
+
     def __repr__(self):
         return str(self.left)+str(self.op.value)+str(self.right)
 
@@ -495,6 +640,12 @@ class UnariExpression(AST):
     def Analisissemantico(self):
         self.right.Analisissemantico()
         self.type=self.right.type
+
+    def evalExpression(self, file, indent=0, pila=[]):
+        cadena = "t"*indent
+        self.right.evalExpression(file, indent, pila)
+        valor = pila.pop()
+        pila.append(self.op.value+valor)
 
     def __repr__(self):
             return str(self.op.value)+str(self.right)
@@ -509,6 +660,9 @@ class CastExpression(AST):
             print("Error en la linea  : No se puede castear a %s algo que no sea tipo int o float." %(self.tipo))
         else :
             self.type=eval(self.tipo)
+
+    def evalExpression(self, file, indent=0, pila=[]):
+        pass
 
 
     def __repr__(self):
@@ -528,6 +682,13 @@ class RelationalOp(AST):
         else :
             self.type=type(True)
 
+    def evalExpression(self, file, indent=0, pila=[]):
+        cadena = "\t"*indent
+        self.left.evalExpression(file, indent, pila)
+        self.right.evalExpression(file, indent, pila)
+        print >> file, "\n%s!    operator : %s" % (cadena, self.op.value)
+
+
     def __repr__(self):
             return str(self.left)+str(self.op.value)+str(self.right)
 
@@ -537,12 +698,23 @@ class logicaOp(AST):
     type=None
 
     def Analisissemantico(self):
-        self.left.Analisissemantico()
+        if self.left:
+            self.left.Analisissemantico()
         self.right.Analisissemantico()
         self.type=type(True)
 
+
+    def evalExpression(self, file, indent=0, pila=[]):
+        cadena = "\t"*indent
+        if self.left:
+            self.left.evalExpression(file, indent, pila)
+        self.right.evalExpression(file, indent, pila)
+        print >> file, "\n%s!    operator : %s" % (cadena, self.op.value)
+
     def __repr__(self):
             return str(self.left)+str(self.op.value)+str(self.right)
+
+
 
 
 class FunCall(AST): # Falta chequear que si es un array el argumento, se mire si tienen el mismo indice, god save us
@@ -604,124 +776,35 @@ class FunCall(AST): # Falta chequear que si es un array el argumento, se mire si
         else:
             print("Error en la linea %s : La funcion principal main no se puede llamar dentro de una funcion."% self.ID.lineno)
 
+
+    def evalExpression(self, file, indent=0, pila=[]): # todo: tener en cuenta la revision de los parametros
+        cadena = "\t"*indent
+        i=1
+
+        if self.args :
+            for arg in self.args.argsList:
+                arg.evalExpression(file,indent+1,pila)
+                print >>file,"\n%s arg %s := pop" % (cadena,i)
+                i+=1
+        print >> file, "\n%s! push %s(" % (cadena,self.ID.value),
+        for z in range(len(self.args.argsList)):
+            print >> file, "arg %s ," % (z+1),
+        print >> file, ")"
+
+    def codeGenerator(self, file, indent=0, pila=[]): # todo: tener en cuenta la revision de los parametros
+        cadena = "\t"*indent
+        i=1
+
+        if self.args :
+            for arg in self.args.argsList:
+                arg.evalExpression(file,indent+1,pila)
+                print >>file,"\n%s arg %s := pop" % (cadena,i)
+                i+=1
+        print >> file, "\n%s! push %s(" % (cadena,self.ID.value),
+        for z in range(len(self.args.argsList)):
+            print >> file, "arg %s ," % (z+1),
+        print >> file, ")"
+
+
     def __repr__(self):
             return str(self.ID.value)+"("+str(self.args.argsList)+")"
-
-
-
-# ----------------------------------------------------------------------
-#                  NO MODIFIQUE NADA AQUI ABAJO
-# ----------------------------------------------------------------------
-
-# Las clase siguientes para visitar y reescribir el AST son tomadas
-# desde el módulo ast de python .
-
-# NO MODIFIQUE
-class NodeVisitor(object):
-    '''
-    Clase para visitar nodos del árbol de sintaxis.  Se modeló a partir
-    de una clase similar en la librería estándar ast.NodeVisitor.  Para
-    cada nodo, el método visit(node) llama un método visit_NodeName(node)
-    el cual debe ser implementado en la subclase.  El método genérico
-    generic_visit() es llamado para todos los nodos donde no hay coincidencia
-    con el método visit_NodeName().
-    
-    Es es un ejemplo de un visitante que examina operadores binarios:
-
-        class VisitOps(NodeVisitor):
-            visit_Binop(self,node):
-                print("Operador binario", node.op)
-                self.visit(node.left)
-                self.visit(node.right)
-            visit_Unaryop(self,node):
-                print("Operador unario", node.op)
-                self.visit(node.expr)
-
-        tree = parse(txt)
-        VisitOps().visit(tree)
-    '''
-    def visit(self,node):
-        '''
-        Ejecuta un método de la forma visit_NodeName(node) donde
-        NodeName es el nombre de la clase de un nodo particular.
-        '''
-        if node:
-            method = 'visit_' + node.__class__.__name__
-            visitor = getattr(self, method, self.generic_visit)
-            return visitor(node)
-        else:
-            return None
-
-    def generic_visit(self,node):
-        '''
-        Método ejecutado si no se encuentra médodo aplicable visit_.
-        Este examina el nodo para ver si tiene _fields, es una lista,
-        o puede ser recorrido completamente.
-        '''
-        for field in getattr(node,"_fields"):
-            value = getattr(node,field,None)
-            if isinstance(value, list):
-                for item in value:
-                    if isinstance(item,AST):
-                        self.visit(item)
-            elif isinstance(value, AST):
-                self.visit(value)
-
-# NO MODIFICAR
-class NodeTransformer(NodeVisitor):
-    '''
-    Clase que permite que los nodos del arbol de sintraxis sean 
-    reemplazados/reescritos.  Esto es determinado por el valor retornado
-    de varias funciones visit_().  Si el valor retornado es None, un
-    nodo es borrado. Si se retorna otro valor, reemplaza el nodo
-    original.
-    
-    El uso principal de esta clase es en el código que deseamos aplicar
-    transformaciones al arbol de sintaxis.  Por ejemplo, ciertas optimizaciones
-    del compilador o ciertas reescrituras de pasos anteriores a la generación
-    de código.
-    '''
-    def generic_visit(self,node):
-        for field in getattr(node,"_fields"):
-            value = getattr(node,field,None)
-            if isinstance(value,list):
-                newvalues = []
-                for item in value:
-                    if isinstance(item,AST):
-                        newnode = self.visit(item)
-                        if newnode is not None:
-                            newvalues.append(newnode)
-                    else:
-                        newvalues.append(node)
-                value[:] = newvalues
-            elif isinstance(value,AST):
-                newnode = self.visit(value)
-                if newnode is None:
-                    delattr(node,field)
-                else:
-                    setattr(node,field,newnode)
-        return node
-
-# NO MODIFICAR
-def flatten(top):
-    '''
-    Aplana el arbol de sintaxis dentro de una lista para efectos
-    de depuración y pruebas.  Este retorna una lista de tuplas de
-    la forma (depth, node) donde depth es un entero representando
-    la profundidad del arból de sintaxis y node es un node AST
-    asociado.
-    '''
-    class Flattener(NodeVisitor):
-        def __init__(self):
-            self.depth = 0
-            self.nodes = []
-        def generic_visit(self,node):
-            self.nodes.append((self.depth,node))
-            self.depth += 1
-            NodeVisitor.generic_visit(self,node)
-            self.depth -= 1
-
-    d = Flattener()
-    d.visit(top)
-    return d.nodes
-
